@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+
+  --color-paper: #f5f3ef;
+  --color-surface: #ffffff;
+  --color-line: #e3ded5;
+  --color-ink: #1d2731;
+  --color-muted: #66727d;
+  --color-brand: #0e7c74;
+  --color-brand-ink: #0a5a54;
+  --color-brand-soft: #d7eeeb;
+  --color-accent: #e08a4b;
+  --color-success: #2f9e62;
+  --color-danger: #d9534a;
+
+  --shadow-card: 0 0.75rem 2.5rem -0.75rem rgb(29 39 49 / 0.2);
+}
+
+/*
+  Designed for a 1080-wide portrait screen, measured in rem: 1rem = 16 design px.
+  The root font size scales with the screen width and the stage fills the full
+  screen, so near-9:16 displays have no bars: extra height goes to the flexible
+  token bands. Screens shorter than ~9:15 (112rem tall, what the register screen
+  + keyboard needs) scale down instead of overflowing. No CSS transform, so
+  pointer coordinates stay 1:1 and dragging stays accurate.
+*/
+html {
+  font-size: min(calc(100vw / 67.5), calc(100vh / 112));
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  background: var(--color-paper);
+}
+
+input {
+  user-select: text;
+}
+
+img {
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
