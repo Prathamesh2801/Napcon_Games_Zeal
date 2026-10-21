@@ -6,12 +6,11 @@ import { play } from '../../../services/sound'
 import useMatchGame from '../hooks/useMatchGame'
 import { splitHalf } from '../utils'
 
-const SLOT_RADIUS = 39 // % of ring box, slot centers
-const SLOT_SIZE = 27 // % of ring box
+const SLOT_RADIUS = 39
+const SLOT_SIZE = 27
 
 const slotAngle = (i, n) => (i / n) * 2 * Math.PI - Math.PI / 2
 
-// Pie slice of the ring box centered on slot i; the n slices together show the whole chain.
 function wedge(i, n) {
   const step = (2 * Math.PI) / n
   const a = slotAngle(i, n) - step / 2
@@ -55,7 +54,6 @@ export default function LungsGame({ settings, onFinish }) {
       <section className="relative w-full shrink-0">
         <img src={settings.art} alt="" className="block w-full" />
 
-        {/* Chain + slots spin once complete, then the chain cracks into pieces that fly outward with the slots */}
         <motion.div
           className="absolute aspect-square"
           style={{ left: `${x - size / 2}%`, top: `${y}%`, width: `${size}%`, y: '-50%' }}

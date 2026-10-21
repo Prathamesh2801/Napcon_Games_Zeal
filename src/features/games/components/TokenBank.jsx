@@ -3,8 +3,6 @@ import DragToken from './DragToken'
 
 const rand = (min, max) => min + Math.random() * (max - min)
 
-// A band of draggable tokens laid out in `columns` evenly spaced columns (default: one row),
-// with a little random offset/tilt so it doesn't look rigid.
 export default function TokenBank({ tokens, game, columns = tokens.length, tilt = 6, className = '', children }) {
   const [jitter] = useState(() =>
     tokens.map(() => ({ x: rand(-0.8, 0.8), y: rand(-1, 1), rotate: rand(-tilt, tilt) })),
@@ -19,7 +17,6 @@ export default function TokenBank({ tokens, game, columns = tokens.length, tilt 
       {tokens.map((token, i) => (
         <div
           key={token.id}
-          // left/top, not translate/transform: those create a stacking context that traps the dragged token's z-index
           style={{ left: `${jitter[i].x}rem`, top: `${jitter[i].y}rem` }}
           className={`relative ${used.has(token.id) ? 'invisible' : ''}`}
         >

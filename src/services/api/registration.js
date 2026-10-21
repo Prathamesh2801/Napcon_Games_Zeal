@@ -2,7 +2,6 @@ import config from '../../config/config'
 
 const BACKUP_KEY = 'napcon:pending-registrations'
 
-// Never blocks the game: on failure the entry is kept in localStorage so no visitor data is lost.
 export async function submitRegistration(data) {
   const { registerUrl, timeoutMs } = config.api
   if (!registerUrl) return
@@ -21,7 +20,6 @@ export async function submitRegistration(data) {
       const pending = JSON.parse(localStorage.getItem(BACKUP_KEY) || '[]')
       localStorage.setItem(BACKUP_KEY, JSON.stringify([...pending, data]))
     } catch {
-      // storage unavailable; nothing more we can do offline
     }
   }
 }

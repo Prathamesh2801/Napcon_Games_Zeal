@@ -3,7 +3,6 @@ import config from '../../../config/config'
 import { play } from '../../../services/sound'
 import { calcScore, canPlace, shuffle, solveBoard } from '../utils'
 
-// Shared engine for both games: tokens are dragged onto slots (token.slot === slot id).
 export default function useMatchGame({ tokens, slotOrder, strictOrder = false, timeLimit, onFinish }) {
   const [bank] = useState(() => shuffle(tokens))
   const [placed, setPlaced] = useState({})
@@ -24,7 +23,6 @@ export default function useMatchGame({ tokens, slotOrder, strictOrder = false, t
     onFinish({ ...stats, won: complete, score: calcScore(stats, config.scoring) })
   }
 
-  // Date-based so it doesn't drift; stops once the board is complete.
   useEffect(() => {
     if (!timeLimit || complete) return
     const end = Date.now() + timeLimit * 1000
@@ -36,7 +34,6 @@ export default function useMatchGame({ tokens, slotOrder, strictOrder = false, t
     if (timeLeft === 0 && !complete) finish()
   })
 
-  // Returns 'placed' | 'wrong' | 'none' (dropped outside any open slot).
   const tryPlace = (token, slotId) => {
     if (!slotId || over) return 'none'
     if (!canPlace(token, slotId, { placed, slotOrder, strictOrder })) {
@@ -49,7 +46,6 @@ export default function useMatchGame({ tokens, slotOrder, strictOrder = false, t
     return 'placed'
   }
 
-  // Dev mode only: fill the board correctly so the completion animation + finale can be checked quickly.
   const solve = () => !over && setPlaced(solveBoard(tokens, slotOrder))
 
   return { bank, placed, mistakes, hover, setHover, timeLeft, correct, total, complete, over, tryPlace, finish, solve }

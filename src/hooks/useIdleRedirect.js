@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 
-// Navigates to `to` after `seconds` without a touch/key; returns seconds left. Falsy seconds = off.
 export default function useIdleRedirect(seconds, to = '/') {
   const navigate = useNavigate()
   const [left, setLeft] = useState(seconds)

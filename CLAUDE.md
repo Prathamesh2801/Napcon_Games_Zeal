@@ -92,7 +92,11 @@ docs/                         ← client source files per game (1st_game_lungs/,
 - Colors only via theme tokens: `paper surface line ink muted brand brand-ink brand-soft accent success danger`, `shadow-card`.
 - Big touch targets (h-20+/h-24 buttons, text-2xl+). No hover-only UI. `touch-none` on draggables.
 - Content/tuning goes in `public/config.js`, not in components.
-- Style: no semicolons, single quotes, 2-space indent, arrow fns, default-export components, minimal comments.
+- Style: no semicolons, single quotes, 2-space indent, arrow fns, default-export components.
+- **No comments anywhere** (code, `public/config.js`, CSS, HTML) — user preference. Explain things in this file instead.
+- Config cheat sheet (since `public/config.js` has no comments): `devMode` Finish button; `games.*.timeLimit` seconds or null;
+  `strictOrder` fill 1→N; `slot: null` = decoy; `ring` = % of art (x, y centre, size = diameter of width);
+  `finale { image, seconds }`; `api.registerUrl` empty = don't send; text `­` soft hyphen, `‑` non-breaking hyphen.
 - Registration must never block play: API errors fall back to localStorage key `napcon:pending-registrations`.
 - Keep pure logic in `utils.js` and add a case to `utils.test.js` when it changes.
 
@@ -100,6 +104,7 @@ docs/                         ← client source files per game (1st_game_lungs/,
 
 _Update this list as work progresses (newest first)._
 
+- **2026-10-21** — Removed all comments from the project (user request); config meanings documented in Conventions.
 - **2026-10-21** — Runtime config: settings moved to `public/config.js`, media to `public/media/` (editable in `dist/` without a
   rebuild). `devMode` Finish button. Table game also ends on a finale image (no score); finale has a home button.
   `npm run build` → postbuild `bestzip napcon-games.zip dist`.

@@ -15,7 +15,6 @@ function keyWidth(key, layout) {
   return 'w-[5.6rem]'
 }
 
-// Emits key names ('a', '0', 'space', 'backspace', 'clear'); the owner decides what they do.
 export default function OnScreenKeyboard({ layout = 'text', onKey }) {
   return (
     <motion.div

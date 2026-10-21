@@ -9,7 +9,6 @@ export default function KioskLayout() {
     return () => window.removeEventListener('contextmenu', block)
   }, [])
 
-  // Double tap on empty space toggles fullscreen (Android Chrome + desktop; iPhone Safari has no Fullscreen API).
   useEffect(() => {
     if (!config.app.doubleTapFullscreen || !document.fullscreenEnabled) return
     let last = { t: 0, x: 0, y: 0 }

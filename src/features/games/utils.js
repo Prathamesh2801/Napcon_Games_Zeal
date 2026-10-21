@@ -12,14 +12,11 @@ export function splitHalf(list) {
   return [list.slice(0, mid), list.slice(mid)]
 }
 
-// token.slot: one slot id, or an array when identical tokens are interchangeable.
-// strictOrder: only the first unfilled slot in slotOrder accepts a token.
 export function canPlace(token, slotId, { placed, slotOrder, strictOrder }) {
   if (![].concat(token.slot).includes(slotId) || placed[slotId]) return false
   return !strictOrder || slotOrder.find(id => !placed[id]) === slotId
 }
 
-// Dev mode: a correct full board { slotId: token }, each token used once.
 export function solveBoard(tokens, slotOrder) {
   const used = new Set()
   const placed = {}

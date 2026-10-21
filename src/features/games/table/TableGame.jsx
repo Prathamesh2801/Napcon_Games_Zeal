@@ -35,7 +35,7 @@ export default function TableGame({ settings, onFinish }) {
     if (!game.complete) return
     const id = setTimeout(game.finish, config.timing.completionDelayMs)
     return () => clearTimeout(id)
-  }, [game.complete]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [game.complete])
 
   const card = t => (
     <div className="grid min-h-28 w-56 place-items-center rounded-2xl border-2 border-line bg-surface px-4 py-4 text-center shadow-card">
@@ -57,7 +57,6 @@ export default function TableGame({ settings, onFinish }) {
 
       <section className="shrink-0 px-4">
         <div className="grid gap-x-2.5" style={{ gridTemplateColumns: template }}>
-          {/* Column cards behind the cells */}
           {[{}, ...columns].map((col, c) => (
             <div
               key={c}

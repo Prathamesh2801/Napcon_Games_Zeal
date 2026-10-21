@@ -2,14 +2,13 @@ import { animate, motion, useMotionValue } from 'framer-motion'
 
 const spring = { type: 'spring', stiffness: 500, damping: 32 }
 
-// Drop targets are any element with data-slot="<id>".
 const slotAt = ({ x, y }) =>
   document.elementsFromPoint(x, y).find(el => el.dataset.slot)?.dataset.slot ?? null
 
 export default function DragToken({ token, index = 0, rotate = 0, disabled, onDrop, onHover, children }) {
   const x = useMotionValue(0)
   const y = useMotionValue(0)
-  const zIndex = useMotionValue(0) // stays raised until the token is back home, so it never slides under the art
+  const zIndex = useMotionValue(0)
 
   const handleDragEnd = (_, info) => {
     onHover(null)

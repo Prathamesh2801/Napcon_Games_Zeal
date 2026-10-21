@@ -5,7 +5,6 @@ import { Navigate, useNavigate, useParams } from 'react-router'
 import Screen from '../components/layout/Screen'
 import config from '../config/config'
 
-// Full-screen image shown after a completed game, then back to home after `finale.seconds` (or via the home button).
 export default function FinalePage() {
   const { gameId } = useParams()
   const navigate = useNavigate()
@@ -16,7 +15,7 @@ export default function FinalePage() {
     if (!finale) return
     const id = setTimeout(home, finale.seconds * 1000)
     return () => clearTimeout(id)
-  }, [finale]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [finale])
 
   if (!finale) return <Navigate to="/" replace />
 

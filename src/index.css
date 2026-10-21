@@ -18,14 +18,6 @@
   --shadow-card: 0 0.75rem 2.5rem -0.75rem rgb(29 39 49 / 0.2);
 }
 
-/*
-  Designed for a 1080-wide portrait screen, measured in rem: 1rem = 16 design px.
-  The root font size scales with the screen width and the stage fills the full
-  screen, so near-9:16 displays have no bars: extra height goes to the flexible
-  token bands. Screens shorter than ~9:15 (112rem tall, what the register screen
-  + keyboard needs) scale down instead of overflowing. No CSS transform, so
-  pointer coordinates stay 1:1 and dragging stays accurate.
-*/
 html {
   font-size: min(calc(100vw / 67.5), calc(100vh / 112));
 }
