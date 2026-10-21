@@ -1,19 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import correctSfx from '../../../assets/sounds/correct.wav'
-import wrongSfx from '../../../assets/sounds/wrong.mp3'
 import config from '../../../config/config'
+import { play } from '../../../services/sound'
 import { calcScore, canPlace, shuffle } from '../utils'
-
-const sounds = { correct: new Audio(correctSfx), wrong: new Audio(wrongSfx) }
-
-// Restarts the clip so quick consecutive drops each get their sound.
-function play(name) {
-  if (!config.sound.enabled) return
-  const audio = sounds[name]
-  audio.volume = config.sound.volume
-  audio.currentTime = 0
-  audio.play().catch(() => {})
-}
 
 // Shared engine for both games: tokens are dragged onto slots (token.slot === slot id).
 export default function useMatchGame({ tokens, slotOrder, strictOrder = false, timeLimit, onFinish }) {

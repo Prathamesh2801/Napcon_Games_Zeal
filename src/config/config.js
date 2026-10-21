@@ -1,4 +1,6 @@
-import lungsArt from '../assets/images/lungs-placeholder.svg'
+import chainArt from '../assets/images/chain.webp'
+import lungsArt from '../assets/images/lungs.webp'
+import finaleArt from '../assets/images/finale-placeholder.svg' // swap for the real image (any png/jpg/webp)
 
 // Single place to tune the kiosk. Rebuild (npm run build) after changes.
 const config = {
@@ -44,18 +46,23 @@ const config = {
   games: {
     lungs: {
       title: 'Lungs Game',
-      description: 'Place the 5 symptoms on the lungs in order',
+      description: 'Place the 5 steps on the lungs in order',
       timeLimit: 60, // seconds, null = no timer
       strictOrder: true, // slots must be filled 1 → 5
       art: lungsArt,
-      ring: { x: 50, y: 58, size: 62 }, // % of the art: center x, center y, diameter (of width)
+      chain: chainArt, // ring image the slots sit on; breaks into pieces on completion
+      finale: { image: finaleArt, seconds: 10 }, // shown after completion instead of the score, then back to home; remove to show the score screen
+      ring: { x: 50, y: 52, size: 74 }, // % of the art: center x, center y, diameter (of width)
       tokens: [
-        { id: 'cough', label: 'Cough', slot: 1 },
-        { id: 'breathless', label: 'Breathless­ness', slot: 2 }, // ­ = soft hyphen, wraps long words in the circle
-        { id: 'wheezing', label: 'Wheezing', slot: 3 },
-        { id: 'chest', label: 'Chest tightness', slot: 4 },
-        { id: 'fatigue', label: 'Fatigue', slot: 5 },
-        // { id: 'image-example', label: 'Inhaler', slot: null, image: someImport },
+        { id: 'inflammation', label: 'Inflammation', slot: 1 },
+        { id: 'mucus', label: 'Mucus Accumulation', slot: 2 },
+        { id: 'damage', label: 'Airway Damage', slot: 3 },
+        { id: 'infection', label: 'Infection', slot: 4 },
+        { id: 'more-mucus', label: 'More Mucus Production', slot: 5 },
+        // Decoys (slot: null) never fit; a soft hyphen (­) can split very long words inside a circle
+        { id: 'airflow', label: 'Healthy Airflow', slot: null },
+        { id: 'clear', label: 'Clear Airways', slot: null },
+        { id: 'broncho', label: 'Broncho­dilation', slot: null },
       ],
     },
 

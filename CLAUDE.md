@@ -29,9 +29,9 @@ Git: `main` → `origin` https://github.com/Prathamesh2801/Napcon_Games_Zeal.git
 ```
 src/
   config/config.js            ← SINGLE place for all content/tuning (texts, timers, scoring, game data, API url)
-  main.jsx, routes/index.jsx  ← hash router: /, /register/:gameId, /play/:gameId, /result
+  main.jsx, routes/index.jsx  ← hash router: /, /register/:gameId, /play/:gameId, /result, /finale/:gameId
   layouts/KioskLayout.jsx     ← full-screen shell, blocks context menu, background blobs
-  pages/                      ← HomePage, RegisterPage, PlayPage, ResultPage (thin; data via route state)
+  pages/                      ← HomePage, RegisterPage, PlayPage, ResultPage, FinalePage (thin; data via route state)
   components/layout/Screen    ← animated page wrapper (absolute inset-0 flex col)
   components/ui/              ← Button (primary|ghost), OnScreenKeyboard (text|numeric layouts)
   features/games/
@@ -39,13 +39,14 @@ src/
     hooks/useMatchGame.js     ← shared engine: bank, placed, mistakes, hover, timer, tryPlace, finish
     utils.js (+ utils.test.js)← shuffle, splitHalf, canPlace, calcScore, formatTime
     components/               ← DragToken, TokenBank, GameHud
-    lungs/LungsGame.jsx       ← 5 symptoms onto a ring of slots over lungs art (strict order 1→5)
+    lungs/LungsGame.jsx       ← 5-step cycle (Inflammation → … → More Mucus Production) onto a chain ring over the lungs art, strict order, 3 decoys
     table/TableGame.jsx       ← SITT half-life table: static header row + first column, 16 value tokens into cells
   features/registration/RegistrationForm.jsx  ← name + phone, on-screen keyboard, validation
+  services/sound.js           ← play('correct'|'wrong'|'chainBreak'), honours config.sound
   services/api/registration.js← POST to config.api.registerUrl; on failure → localStorage backup
   hooks/useIdleRedirect.js    ← go home after N idle seconds, returns seconds left
-  assets/images/lungs-placeholder.svg  ← placeholder art, to be replaced with the real asset
-docs/2_label_game.jpeg        ← client reference for the table game (see Status)
+  assets/images/              ← lungs.webp, chain.webp (lungs game art)
+docs/2nd_game_label/2_label_game.jpeg        ← client reference for the table game (see Status)
 ```
 
 ## How the games work
@@ -72,6 +73,8 @@ docs/2_label_game.jpeg        ← client reference for the table game (see Statu
 - **Sizing**: designed at 1080px wide, measured in **rem (1rem = 16 design px)**. `html` font-size scales with the
   viewport (`index.css`) — so use rem/Tailwind units, never px, and **never CSS `transform: scale` on the stage**
   (it breaks drag pointer math).
+- Never put `transform`/`translate`/`filter`/`z-index` on ancestors of `DragToken` (e.g. TokenBank wrappers): it creates a
+  stacking context and the dragged token (zIndex 50 from drag start until it springs home) slides under the art/table.
 - Colors only via theme tokens: `paper surface line ink muted brand brand-ink brand-soft accent success danger`, `shadow-card`.
 - Big touch targets (h-20+/h-24 buttons, text-2xl+). No hover-only UI. `touch-none` on draggables.
 - Content/tuning goes in `config.js`, not in components. Rebuild after config changes.
@@ -83,15 +86,23 @@ docs/2_label_game.jpeg        ← client reference for the table game (see Statu
 
 _Update this list as work progresses (newest first)._
 
+- **2026-10-21** — Finale screen: a won game with `config.games.<id>.finale = { image, seconds }` goes to `/finale/:gameId`
+  (full-screen image, then home after `seconds`) instead of `/result`. Lungs uses `finale-placeholder.svg` until the real image arrives.
+  Time-up still goes to the score screen; table game still uses the score screen.
+- **2026-10-21** — Lungs: final 5-step sequence + 3 decoys (`slot: null`), bigger text (bank `size-56` / 1.65rem, slot 1.5rem, `SLOT_SIZE` 27),
+  `chain-break.wav` plays when the chain breaks (its crack is in the first 0.4s). Sounds moved to `services/sound.js`.
+- **2026-10-21** — Lungs game uses real art (`lungs.webp`, `chain.webp`, converted from `docs/1st_game_lungs/*.png`). Slots sit on the
+  chain (`SLOT_RADIUS` 39 / `SLOT_SIZE` 25). On completion chain + slots rotate, then the chain is swapped for N pie-slice
+  `clip-path` copies (`wedge()`) that crack and fly outward with the slots → result. Headless screenshots don't run framer animations.
 - **2026-10-21** — TokenBank is now a grid (`columns` prop, default one row); table game uses `columns={4}` → 2×4 per band, uniform `w-56` cards, small x/y/tilt jitter.
 - **2026-10-21** — Right/wrong drop sounds (`src/assets/sounds/correct.wav`, `wrong.mp3`) played from `useMatchGame.tryPlace`; `config.sound.enabled/volume`.
-- **2026-10-21** — Game 2 rebuilt as the SITT half-life table from `docs/2_label_game.jpeg` (config-driven `cells`), place animation
+- **2026-10-21** — Game 2 rebuilt as the SITT half-life table from `docs/2nd_game_label/2_label_game.jpeg` (config-driven `cells`), place animation
   (spring pop + success ripple), TokenBank spreads tokens across the whole band (`content-evenly` + x/y jitter). Visual check: headless
   Chrome `--screenshot` at 540×960 @2x works when the browser extension isn't connected.
 - **2026-10-21** — Double-tap fullscreen toggle in `KioskLayout` (ignores button/input/`.touch-none`), switch `config.app.doubleTapFullscreen`.
 - **2026-10-21** — Register screen scaled up (bigger heading/fields/button, keys h-32, form vertically centred). Total ≈ 103rem, keep it under the 112rem budget in `index.css`.
 - **2026-10-21** — Baseline analysed: both games, registration, result screen working; 3/3 tests pass.
-- TODO: Lungs art is a placeholder SVG (`lungs-placeholder.svg`); swap for the real artwork and retune `games.lungs.ring` (x/y/size %).
+- TODO: real finale image for the lungs game → replace the `finaleArt` import in `config.js`.
 - TODO: Besvil-G header is styled text; drop the real logo in `src/assets/images/` and set `image` on that column.
-  (The earlier reference also had a 5th column FLU-F + VIL + UME / Near-aligned profile — current `docs/2_label_game.jpeg` has 4.)
+  (The earlier reference also had a 5th column FLU-F + VIL + UME / Near-aligned profile — current `docs/2nd_game_label/2_label_game.jpeg` has 4.)
 - TODO: `config.api.registerUrl` is empty → registrations are not sent anywhere yet (and not backed up either, since the early return skips storage).

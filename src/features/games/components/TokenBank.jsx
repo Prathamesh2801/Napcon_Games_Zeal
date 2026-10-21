@@ -19,8 +19,9 @@ export default function TokenBank({ tokens, game, columns = tokens.length, tilt 
       {tokens.map((token, i) => (
         <div
           key={token.id}
-          style={{ translate: `${jitter[i].x}rem ${jitter[i].y}rem` }}
-          className={used.has(token.id) ? 'invisible' : ''}
+          // left/top, not translate/transform: those create a stacking context that traps the dragged token's z-index
+          style={{ left: `${jitter[i].x}rem`, top: `${jitter[i].y}rem` }}
+          className={`relative ${used.has(token.id) ? 'invisible' : ''}`}
         >
           <DragToken
             token={token}

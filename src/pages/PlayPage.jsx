@@ -12,8 +12,11 @@ export default function PlayPage() {
   if (!settings || !games[gameId]) return <Navigate to="/" replace />
 
   const { Component } = games[gameId]
+  // A completed game with a finale shows that image instead of the score screen.
   const finish = result =>
-    navigate('/result', { replace: true, state: { ...result, gameId, player: state?.player } })
+    result.won && settings.finale
+      ? navigate(`/finale/${gameId}`, { replace: true })
+      : navigate('/result', { replace: true, state: { ...result, gameId, player: state?.player } })
 
   return (
     <Screen>
