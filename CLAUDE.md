@@ -21,7 +21,8 @@ npm run preview
 npm test         # node --test "src/**/*.test.js"
 ```
 
-Not a git repo yet. `dist/` is the deployable output (copy into XAMPP `htdocs/<folder>`).
+Git: `main` → `origin` https://github.com/Prathamesh2801/Napcon_Games_Zeal.git. `dist/` and `node_modules/` are gitignored;
+`dist/` is the deployable output (run `npm run build`, copy into XAMPP `htdocs/<folder>`).
 
 ## Layout
 
