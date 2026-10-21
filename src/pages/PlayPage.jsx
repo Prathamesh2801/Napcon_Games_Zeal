@@ -13,7 +13,7 @@ export default function PlayPage() {
 
   const { Component } = games[gameId]
   const finish = result =>
-    result.won && settings.finale
+    settings.finale
       ? navigate(`/finale/${gameId}`, { replace: true })
       : navigate('/result', { replace: true, state: { ...result, gameId, player: state?.player } })
 

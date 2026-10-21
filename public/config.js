@@ -33,7 +33,7 @@ window.NAPCON_CONFIG = {
   },
 
   api: {
-    registerUrl: "",
+    registerUrl: "api/register.php",
     timeoutMs: 5000,
   },
 

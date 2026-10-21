@@ -5,3 +5,5 @@ dist/
 .vscode/
 .idea/
 *.zip
+public/api/data/*
+!public/api/data/.htaccess

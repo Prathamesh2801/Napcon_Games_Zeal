@@ -1,8 +1,8 @@
 # NAPCON Games — touchscreen kiosk
 
 Two drag-and-drop matching games for a NAPCON (pulmonology conference) booth, running full-screen
-on a **1080-wide portrait touchscreen**. Flow: Home → (optional) Register → Play → Finale image (completed) or score screen
-(time ran out) → auto back to Home.
+on a **1080-wide portrait touchscreen**. Flow: Home → (optional) Register → Play → Finale image (same image whether completed or time ran out)
+→ auto back to Home.
 
 > Keep this file current. When something changes, update the relevant section and the **Status** log at the bottom.
 
@@ -35,6 +35,20 @@ Deploy: unzip `napcon-games.zip` into XAMPP `htdocs/<folder>`.
 - `devMode: true` → orange **Finish** button in the game HUD that solves the board (`solveBoard`) so the completion
   animation + finale can be checked fast. Keep it `false` for the event.
 
+## Backend (registrations)
+
+- `public/api/register.php` (→ `dist/api/register.php`), plain PHP 8.0+, no Composer, runs under XAMPP Apache.
+  POST JSON `{ name, phone, game, registeredAt }` → validates (name letters/space/.'- ≤60, phone empty or 10 digits,
+  game `[a-z0-9-]`) → `{ ok: true, id }` or 400 `{ ok: false, errors }`.
+- Each save (under an exclusive `flock` on `data/.lock`) writes all three: `data/registrations.json` (source of truth,
+  rewritten), `data/registrations.csv` (UTF-8 BOM, appended), `data/registrations.xlsx` (regenerated via `ZipArchive`,
+  bold frozen header). Columns: ID, Name, Phone, Game, Registered At (client ISO), Saved At (server, Asia/Kolkata).
+- `api/data/.htaccess` = `Require all denied`; data files are gitignored and never in the zip, so redeploying keeps them.
+- Frontend `services/api/registration.js`: success needs `{ ok: true }`; 4xx = rejected (logged, dropped); network/5xx/
+  non-JSON (e.g. `npm run dev`, which can't run PHP) = kept in localStorage `napcon:pending-registrations` and re-sent
+  after the next successful submit. `api.registerUrl` empty = only store locally.
+- Test locally: `C:/xampp/php/php.exe -S 127.0.0.1:8099 -t dist` then POST to `/api/register.php`.
+
 ## Layout
 
 ```
@@ -54,10 +68,11 @@ src/
     table/TableGame.jsx       ← SITT half-life table: static header row + first column, 16 value tokens into cells
   features/registration/RegistrationForm.jsx  ← name + phone, on-screen keyboard, validation
   services/sound.js           ← play('correct'|'wrong'|'chainBreak'), files + on/off/volume from config.sound
-  services/api/registration.js← POST to config.api.registerUrl; on failure → localStorage backup
+  services/api/registration.js← POST to config.api.registerUrl (api/register.php); failures backed up + retried
   hooks/useIdleRedirect.js    ← go home after N idle seconds, returns seconds left
 public/
   config.js                   ← runtime settings/content (see above)
+  api/register.php            ← registration endpoint → api/data/registrations.{json,csv,xlsx}
   media/                      ← lungs.webp, chain.webp, finale-lungs.svg, finale-table.svg, sounds/*
 docs/                         ← client source files per game (1st_game_lungs/, 2nd_game_label/); not shipped
 ```
@@ -72,10 +87,9 @@ docs/                         ← client source files per game (1st_game_lungs/,
   A slot stops being a target by removing its `data-slot` (filled cells do this).
 - `tryPlace` returns `'placed' | 'wrong' | 'none'`; wrong = shake + mistake++, none = spring back.
 - `strictOrder`: only the first unfilled slot in `slotOrder` accepts.
-- Finish: complete board (after its animation / `timing.completionDelayMs`) → `/finale/:gameId` when the game has
-  `finale: { image, seconds }` (image, home button, auto-home after `seconds`). Timer hits 0 → `/result` score screen with
-  `{ won, score, correct, total, mistakes, timeLeft, player, gameId }` in route state.
-- Score (score screen only) = `correct*pointsPerCorrect − mistakes*penaltyPerMistake + timeLeft*timeBonusPerSecond`, floored at 0.
+- Finish: complete board (after its animation / `timing.completionDelayMs`) or timer hits 0 → `/finale/:gameId`.
+  One `finale: { image, seconds }` per game, shown for both outcomes (image, home button, auto-home after `seconds`).
+- `/result` score screen is only a fallback for a game without `finale`. Score = `correct*pointsPerCorrect − mistakes*penaltyPerMistake + timeLeft*timeBonusPerSecond`, floored at 0.
 
 ### Adding a game
 1. Add its settings under `games.<id>` in `public/config.js` (title, description, timeLimit, strictOrder, tokens…).
@@ -96,14 +110,18 @@ docs/                         ← client source files per game (1st_game_lungs/,
 - **No comments anywhere** (code, `public/config.js`, CSS, HTML) — user preference. Explain things in this file instead.
 - Config cheat sheet (since `public/config.js` has no comments): `devMode` Finish button; `games.*.timeLimit` seconds or null;
   `strictOrder` fill 1→N; `slot: null` = decoy; `ring` = % of art (x, y centre, size = diameter of width);
-  `finale { image, seconds }`; `api.registerUrl` empty = don't send; text `­` soft hyphen, `‑` non-breaking hyphen.
-- Registration must never block play: API errors fall back to localStorage key `napcon:pending-registrations`.
+  `finale { image, seconds }`; `api.registerUrl` empty = don't send; in labels a soft hyphen is U+00AD, a non-breaking hyphen is U+2011.
+- Registration must never block play: API errors fall back to localStorage key `napcon:pending-registrations` (retried later).
 - Keep pure logic in `utils.js` and add a case to `utils.test.js` when it changes.
 
 ## Status / open items
 
 _Update this list as work progresses (newest first)._
 
+- **2026-10-21** — PHP registration backend (`public/api/register.php`) saving JSON + CSV + XLSX, tested with XAMPP PHP 8.0
+  incl. 10 parallel requests (unique ids, files consistent). Frontend retries offline backups.
+- **2026-10-21** — Time-up also shows the game's finale image: one image per game for both win and time-up
+  (user confirmed). Score screen no longer reached while `finale` is set.
 - **2026-10-21** — Removed all comments from the project (user request); config meanings documented in Conventions.
 - **2026-10-21** — Runtime config: settings moved to `public/config.js`, media to `public/media/` (editable in `dist/` without a
   rebuild). `devMode` Finish button. Table game also ends on a finale image (no score); finale has a home button.
@@ -124,8 +142,6 @@ _Update this list as work progresses (newest first)._
 - **2026-10-21** — Double-tap fullscreen toggle in `KioskLayout` (ignores button/input/`.touch-none`), switch `config.app.doubleTapFullscreen`.
 - **2026-10-21** — Register screen scaled up (bigger heading/fields/button, keys h-32, form vertically centred). Total ≈ 103rem, keep it under the 112rem budget in `index.css`.
 - **2026-10-21** — Baseline analysed: both games, registration, result screen working; 3/3 tests pass.
-- TODO: real finale images → put them in `public/media/` (or `dist/media/`) and set `games.<id>.finale.image`.
-- Open question: on time-up both games still show the score screen — user said no scoring; confirm what time-up should show.
+- TODO: 2 real finale images (lungs, table) → `public/media/` (or `dist/media/`), set `games.<id>.finale.image`.
 - TODO: Besvil-G header is styled text; drop the real logo in `public/media/` and set `image: 'media/…'` on that column.
   (The earlier reference also had a 5th column FLU-F + VIL + UME / Near-aligned profile — current `docs/2nd_game_label/2_label_game.jpeg` has 4.)
-- TODO: `config.api.registerUrl` is empty → registrations are not sent anywhere yet (and not backed up either, since the early return skips storage).
