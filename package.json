@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
+    "postbuild": "bestzip napcon-games.zip dist",
     "preview": "vite preview",
     "test": "node --test \"src/**/*.test.js\""
   },
@@ -19,6 +20,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^6.1.2",
+    "bestzip": "^4.0.3",
     "tailwindcss": "^4.3.3",
     "vite": "^8.3.5"
   }

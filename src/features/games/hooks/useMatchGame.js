@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import config from '../../../config/config'
 import { play } from '../../../services/sound'
-import { calcScore, canPlace, shuffle } from '../utils'
+import { calcScore, canPlace, shuffle, solveBoard } from '../utils'
 
 // Shared engine for both games: tokens are dragged onto slots (token.slot === slot id).
 export default function useMatchGame({ tokens, slotOrder, strictOrder = false, timeLimit, onFinish }) {
@@ -49,5 +49,8 @@ export default function useMatchGame({ tokens, slotOrder, strictOrder = false, t
     return 'placed'
   }
 
-  return { bank, placed, mistakes, hover, setHover, timeLeft, correct, total, complete, over, tryPlace, finish }
+  // Dev mode only: fill the board correctly so the completion animation + finale can be checked quickly.
+  const solve = () => !over && setPlaced(solveBoard(tokens, slotOrder))
+
+  return { bank, placed, mistakes, hover, setHover, timeLeft, correct, total, complete, over, tryPlace, finish, solve }
 }

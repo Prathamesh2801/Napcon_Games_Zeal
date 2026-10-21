@@ -19,6 +19,19 @@ export function canPlace(token, slotId, { placed, slotOrder, strictOrder }) {
   return !strictOrder || slotOrder.find(id => !placed[id]) === slotId
 }
 
+// Dev mode: a correct full board { slotId: token }, each token used once.
+export function solveBoard(tokens, slotOrder) {
+  const used = new Set()
+  const placed = {}
+  for (const id of slotOrder) {
+    const token = tokens.find(t => !used.has(t.id) && [].concat(t.slot).includes(id))
+    if (!token) continue
+    used.add(token.id)
+    placed[id] = token
+  }
+  return placed
+}
+
 export function calcScore({ correct, mistakes, timeLeft }, scoring) {
   const raw =
     correct * scoring.pointsPerCorrect -

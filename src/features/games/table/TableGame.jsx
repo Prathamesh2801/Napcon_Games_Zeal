@@ -49,7 +49,7 @@ export default function TableGame({ settings, onFinish }) {
 
   return (
     <>
-      <GameHud title={settings.title} timeLeft={game.timeLeft} correct={game.correct} total={game.total} />
+      <GameHud title={settings.title} timeLeft={game.timeLeft} correct={game.correct} total={game.total} onSolve={game.solve} />
 
       <TokenBank tokens={top} game={game} columns={4} tilt={4} className="flex-1">
         {card}

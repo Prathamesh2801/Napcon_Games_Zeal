@@ -1,7 +1,8 @@
 # NAPCON Games — touchscreen kiosk
 
 Two drag-and-drop matching games for a NAPCON (pulmonology conference) booth, running full-screen
-on a **1080-wide portrait touchscreen**. Flow: Home → (optional) Register → Play → Result → auto back to Home.
+on a **1080-wide portrait touchscreen**. Flow: Home → (optional) Register → Play → Finale image (completed) or score screen
+(time ran out) → auto back to Home.
 
 > Keep this file current. When something changes, update the relevant section and the **Status** log at the bottom.
 
@@ -16,19 +17,29 @@ on a **1080-wide portrait touchscreen**. Flow: Home → (optional) Register → 
 
 ```
 npm run dev      # vite --host (reachable from the kiosk on LAN)
-npm run build    # → dist/, base './' so it runs from any XAMPP htdocs subfolder
+npm run build    # → dist/ (base './', runs from any XAMPP htdocs subfolder), then postbuild zips it → napcon-games.zip
 npm run preview
 npm test         # node --test "src/**/*.test.js"
 ```
 
-Git: `main` → `origin` https://github.com/Prathamesh2801/Napcon_Games_Zeal.git. `dist/` and `node_modules/` are gitignored;
-`dist/` is the deployable output (run `npm run build`, copy into XAMPP `htdocs/<folder>`).
+Git: `main` → `origin` https://github.com/Prathamesh2801/Napcon_Games_Zeal.git. `dist/`, `node_modules/`, `*.zip` are gitignored.
+Deploy: unzip `napcon-games.zip` into XAMPP `htdocs/<folder>`.
+
+## Runtime config (no rebuild)
+
+- **All settings + content live in `public/config.js`** (→ `dist/config.js`): a classic script setting `window.NAPCON_CONFIG`,
+  loaded by `index.html` before the app. `src/config/config.js` just re-exports it. Edit `dist/config.js` on the kiosk + refresh.
+- **All media live in `public/media/`** (→ `dist/media/`) and are referenced by relative path strings in config
+  (art, chain, finale images, sound files). Replace a file or point the config at a new one — no rebuild.
+- Don't `import` images/sounds in `src/`; anything content-like belongs in `public/`.
+- `devMode: true` → orange **Finish** button in the game HUD that solves the board (`solveBoard`) so the completion
+  animation + finale can be checked fast. Keep it `false` for the event.
 
 ## Layout
 
 ```
 src/
-  config/config.js            ← SINGLE place for all content/tuning (texts, timers, scoring, game data, API url)
+  config/config.js            ← re-exports window.NAPCON_CONFIG (the real settings are in public/config.js)
   main.jsx, routes/index.jsx  ← hash router: /, /register/:gameId, /play/:gameId, /result, /finale/:gameId
   layouts/KioskLayout.jsx     ← full-screen shell, blocks context menu, background blobs
   pages/                      ← HomePage, RegisterPage, PlayPage, ResultPage, FinalePage (thin; data via route state)
@@ -36,17 +47,19 @@ src/
   components/ui/              ← Button (primary|ghost), OnScreenKeyboard (text|numeric layouts)
   features/games/
     index.js                  ← registry { id: { Component, Icon } } — keys MUST match config.games
-    hooks/useMatchGame.js     ← shared engine: bank, placed, mistakes, hover, timer, tryPlace, finish
-    utils.js (+ utils.test.js)← shuffle, splitHalf, canPlace, calcScore, formatTime
+    hooks/useMatchGame.js     ← shared engine: bank, placed, mistakes, hover, timer, tryPlace, finish, solve (dev)
+    utils.js (+ utils.test.js)← shuffle, splitHalf, canPlace, solveBoard, calcScore, formatTime
     components/               ← DragToken, TokenBank, GameHud
     lungs/LungsGame.jsx       ← 5-step cycle (Inflammation → … → More Mucus Production) onto a chain ring over the lungs art, strict order, 3 decoys
     table/TableGame.jsx       ← SITT half-life table: static header row + first column, 16 value tokens into cells
   features/registration/RegistrationForm.jsx  ← name + phone, on-screen keyboard, validation
-  services/sound.js           ← play('correct'|'wrong'|'chainBreak'), honours config.sound
+  services/sound.js           ← play('correct'|'wrong'|'chainBreak'), files + on/off/volume from config.sound
   services/api/registration.js← POST to config.api.registerUrl; on failure → localStorage backup
   hooks/useIdleRedirect.js    ← go home after N idle seconds, returns seconds left
-  assets/images/              ← lungs.webp, chain.webp (lungs game art)
-docs/2nd_game_label/2_label_game.jpeg        ← client reference for the table game (see Status)
+public/
+  config.js                   ← runtime settings/content (see above)
+  media/                      ← lungs.webp, chain.webp, finale-lungs.svg, finale-table.svg, sounds/*
+docs/                         ← client source files per game (1st_game_lungs/, 2nd_game_label/); not shipped
 ```
 
 ## How the games work
@@ -59,12 +72,13 @@ docs/2nd_game_label/2_label_game.jpeg        ← client reference for the table 
   A slot stops being a target by removing its `data-slot` (filled cells do this).
 - `tryPlace` returns `'placed' | 'wrong' | 'none'`; wrong = shake + mistake++, none = spring back.
 - `strictOrder`: only the first unfilled slot in `slotOrder` accepts.
-- Finish: complete board (after an animation / `timing.completionDelayMs`) or timer hits 0 → `onFinish(result)` →
-  `/result` with `{ won, score, correct, total, mistakes, timeLeft, player, gameId }` in route state.
-- Score = `correct*pointsPerCorrect − mistakes*penaltyPerMistake + timeLeft*timeBonusPerSecond`, floored at 0.
+- Finish: complete board (after its animation / `timing.completionDelayMs`) → `/finale/:gameId` when the game has
+  `finale: { image, seconds }` (image, home button, auto-home after `seconds`). Timer hits 0 → `/result` score screen with
+  `{ won, score, correct, total, mistakes, timeLeft, player, gameId }` in route state.
+- Score (score screen only) = `correct*pointsPerCorrect − mistakes*penaltyPerMistake + timeLeft*timeBonusPerSecond`, floored at 0.
 
 ### Adding a game
-1. Add its settings under `config.games.<id>` (title, description, timeLimit, strictOrder, tokens…).
+1. Add its settings under `games.<id>` in `public/config.js` (title, description, timeLimit, strictOrder, tokens…).
 2. Create `features/games/<id>/<Name>Game.jsx` using `useMatchGame` + `GameHud` + `TokenBank`, rendering `data-slot` targets.
 3. Register it in `features/games/index.js` with an icon. Home lists games from `config.games` automatically.
 
@@ -77,7 +91,7 @@ docs/2nd_game_label/2_label_game.jpeg        ← client reference for the table 
   stacking context and the dragged token (zIndex 50 from drag start until it springs home) slides under the art/table.
 - Colors only via theme tokens: `paper surface line ink muted brand brand-ink brand-soft accent success danger`, `shadow-card`.
 - Big touch targets (h-20+/h-24 buttons, text-2xl+). No hover-only UI. `touch-none` on draggables.
-- Content/tuning goes in `config.js`, not in components. Rebuild after config changes.
+- Content/tuning goes in `public/config.js`, not in components.
 - Style: no semicolons, single quotes, 2-space indent, arrow fns, default-export components, minimal comments.
 - Registration must never block play: API errors fall back to localStorage key `napcon:pending-registrations`.
 - Keep pure logic in `utils.js` and add a case to `utils.test.js` when it changes.
@@ -86,6 +100,9 @@ docs/2nd_game_label/2_label_game.jpeg        ← client reference for the table 
 
 _Update this list as work progresses (newest first)._
 
+- **2026-10-21** — Runtime config: settings moved to `public/config.js`, media to `public/media/` (editable in `dist/` without a
+  rebuild). `devMode` Finish button. Table game also ends on a finale image (no score); finale has a home button.
+  `npm run build` → postbuild `bestzip napcon-games.zip dist`.
 - **2026-10-21** — Finale screen: a won game with `config.games.<id>.finale = { image, seconds }` goes to `/finale/:gameId`
   (full-screen image, then home after `seconds`) instead of `/result`. Lungs uses `finale-placeholder.svg` until the real image arrives.
   Time-up still goes to the score screen; table game still uses the score screen.
@@ -102,7 +119,8 @@ _Update this list as work progresses (newest first)._
 - **2026-10-21** — Double-tap fullscreen toggle in `KioskLayout` (ignores button/input/`.touch-none`), switch `config.app.doubleTapFullscreen`.
 - **2026-10-21** — Register screen scaled up (bigger heading/fields/button, keys h-32, form vertically centred). Total ≈ 103rem, keep it under the 112rem budget in `index.css`.
 - **2026-10-21** — Baseline analysed: both games, registration, result screen working; 3/3 tests pass.
-- TODO: real finale image for the lungs game → replace the `finaleArt` import in `config.js`.
-- TODO: Besvil-G header is styled text; drop the real logo in `src/assets/images/` and set `image` on that column.
+- TODO: real finale images → put them in `public/media/` (or `dist/media/`) and set `games.<id>.finale.image`.
+- Open question: on time-up both games still show the score screen — user said no scoring; confirm what time-up should show.
+- TODO: Besvil-G header is styled text; drop the real logo in `public/media/` and set `image: 'media/…'` on that column.
   (The earlier reference also had a 5th column FLU-F + VIL + UME / Near-aligned profile — current `docs/2nd_game_label/2_label_game.jpeg` has 4.)
 - TODO: `config.api.registerUrl` is empty → registrations are not sent anywhere yet (and not backed up either, since the early return skips storage).
