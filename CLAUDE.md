@@ -39,10 +39,13 @@ Deploy: unzip `napcon-games.zip` into XAMPP `htdocs/<folder>`.
 
 - `public/api/register.php` (→ `dist/api/register.php`), plain PHP 8.0+, no Composer, runs under XAMPP Apache.
   POST JSON `{ name, phone, game, registeredAt }` → validates (name letters/space/.'- ≤60, phone empty or 10 digits,
-  game `[a-z0-9-]`) → `{ ok: true, id }` or 400 `{ ok: false, errors }`.
-- Each save (under an exclusive `flock` on `data/.lock`) writes all three: `data/registrations.json` (source of truth,
-  rewritten), `data/registrations.csv` (UTF-8 BOM, appended), `data/registrations.xlsx` (regenerated via `ZipArchive`,
-  bold frozen header). Columns: ID, Name, Phone, Game, Registered At (client ISO), Saved At (server, Asia/Kolkata).
+  game must be a key of `GAMES` in register.php) → `{ ok: true, id }` or 400 `{ ok: false, errors }`.
+- One pair of files per game in `api/data/`: `<game>-registrations.json` (source of truth, rewritten) and
+  `<game>-registrations.csv` (UTF-8 BOM so Excel shows names right, appended); ids count per game. Writes are serialised
+  with `flock` on `data/.lock`. CSV columns: ID, Name, Phone, Game (readable name), Registered At (client ISO),
+  Saved At (server, Asia/Kolkata); JSON also keeps the `game` id.
+- **Adding a game**: also add it to `GAMES` (`'id' => 'Readable Name'`) in `public/api/register.php`, or its
+  registrations are rejected.
 - `api/data/.htaccess` = `Require all denied`; data files are gitignored and never in the zip, so redeploying keeps them.
 - Frontend `services/api/registration.js`: success needs `{ ok: true }`; 4xx = rejected (logged, dropped); network/5xx/
   non-JSON (e.g. `npm run dev`, which can't run PHP) = kept in localStorage `napcon:pending-registrations` and re-sent
@@ -72,7 +75,7 @@ src/
   hooks/useIdleRedirect.js    ← go home after N idle seconds, returns seconds left
 public/
   config.js                   ← runtime settings/content (see above)
-  api/register.php            ← registration endpoint → api/data/registrations.{json,csv,xlsx}
+  api/register.php            ← registration endpoint → api/data/<game>-registrations.{json,csv}
   media/                      ← lungs.webp, chain.webp, finale-lungs.svg, finale-table.svg, sounds/*
 docs/                         ← client source files per game (1st_game_lungs/, 2nd_game_label/); not shipped
 ```
@@ -95,6 +98,7 @@ docs/                         ← client source files per game (1st_game_lungs/,
 1. Add its settings under `games.<id>` in `public/config.js` (title, description, timeLimit, strictOrder, tokens…).
 2. Create `features/games/<id>/<Name>Game.jsx` using `useMatchGame` + `GameHud` + `TokenBank`, rendering `data-slot` targets.
 3. Register it in `features/games/index.js` with an icon. Home lists games from `config.games` automatically.
+4. Add it to `GAMES` in `public/api/register.php` so its registrations are accepted.
 
 ## Conventions
 
@@ -118,6 +122,8 @@ docs/                         ← client source files per game (1st_game_lungs/,
 
 _Update this list as work progresses (newest first)._
 
+- **2026-10-21** — Registrations: XLSX dropped; JSON + CSV per game (`lungs-…`, `table-…`), readable Game column,
+  unknown games rejected.
 - **2026-10-21** — PHP registration backend (`public/api/register.php`) saving JSON + CSV + XLSX, tested with XAMPP PHP 8.0
   incl. 10 parallel requests (unique ids, files consistent). Frontend retries offline backups.
 - **2026-10-21** — Time-up also shows the game's finale image: one image per game for both win and time-up
