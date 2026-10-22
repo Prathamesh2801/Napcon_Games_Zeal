@@ -3,7 +3,7 @@ window.NAPCON_CONFIG = {
 
   app: {
     title: "Napcon Games",
-    logo: "",
+    logos: { left: "", right: "" },
     doubleTapFullscreen: true,
   },
 

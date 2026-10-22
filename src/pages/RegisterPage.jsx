@@ -1,6 +1,6 @@
 import { Navigate, useNavigate, useParams } from 'react-router'
 import Screen from '../components/layout/Screen'
-import Logo from '../components/ui/Logo'
+import BrandBar from '../components/ui/BrandBar'
 import config from '../config/config'
 import RegistrationForm from '../features/registration/RegistrationForm'
 import useIdleRedirect from '../hooks/useIdleRedirect'
@@ -15,8 +15,8 @@ export default function RegisterPage() {
 
   return (
     <Screen>
-      <header className="flex justify-center px-10 pt-10">
-        <Logo className="aspect-[6.4] w-[40rem]" />
+      <header className="px-10 pt-10">
+        <BrandBar className="h-28" />
       </header>
 
       <RegistrationForm

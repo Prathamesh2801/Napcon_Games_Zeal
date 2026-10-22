@@ -60,7 +60,7 @@ src/
   layouts/KioskLayout.jsx     ← full-screen shell, blocks context menu, background blobs
   pages/                      ← RegisterPage (landing), PlayPage, ResultPage, FinalePage (thin; data via route state)
   components/layout/Screen    ← animated page wrapper (absolute inset-0 flex col)
-  components/ui/              ← Button (primary|ghost), OnScreenKeyboard (text|numeric layouts), Logo (config.app.logo or dashed placeholder; register header + game HUD)
+  components/ui/              ← Button (primary|ghost), OnScreenKeyboard (text|numeric layouts), BrandBar (Sun Pharma logo left, AB Phylline E right, from config.app.logos or dashed placeholders; register header + game HUD top row)
   features/games/
     index.js                  ← registry { id: { Component, Icon } } — keys MUST match config.games
     hooks/useMatchGame.js     ← shared engine: bank, placed, mistakes, hover, timer, tryPlace, finish, solve (dev)
@@ -104,11 +104,12 @@ docs/                         ← client source files (1st_game_lungs/); not shi
 - Never put `transform`/`translate`/`filter`/`z-index` on ancestors of `DragToken` (e.g. TokenBank wrappers): it creates a
   stacking context and the dragged token (zIndex 50 from drag start until it springs home) slides under the art/table.
 - Colors only via theme tokens: `paper surface line ink muted brand brand-ink brand-soft accent success danger`, `shadow-card`.
+  Palette follows the AB Phylline E brand (`docs/AB PHYLLIN 3PG.pdf`): brand pink `#e82053`, ink `#231f20`.
 - Big touch targets (h-20+/h-24 buttons, text-2xl+). No hover-only UI. `touch-none` on draggables.
 - Content/tuning goes in `public/config.js`, not in components.
 - Style: no semicolons, single quotes, 2-space indent, arrow fns, default-export components.
 - **No comments anywhere** (code, `public/config.js`, CSS, HTML) — user preference. Explain things in this file instead.
-- Config cheat sheet (since `public/config.js` has no comments): `devMode` Finish button; `app.logo` image shown on register + game HUD (empty = dashed "Logo" placeholder); games have no visible title; `games.*.timeLimit` seconds or null;
+- Config cheat sheet (since `public/config.js` has no comments): `devMode` Finish button; `app.logos { left: Sun Pharma, right: AB Phylline E }` image paths (empty = dashed placeholder); games have no visible title; `games.*.timeLimit` seconds or null;
   `strictOrder` fill 1→N; `slot: null` = decoy; `ring` = % of art (x, y centre, size = diameter of width);
   `finale { image, seconds }`; `api.registerUrl` empty = don't send; in labels a soft hyphen is U+00AD, a non-breaking hyphen is U+2011.
 - Registration must never block play: API errors fall back to localStorage key `napcon:pending-registrations` (retried later).
@@ -118,6 +119,8 @@ docs/                         ← client source files (1st_game_lungs/); not shi
 
 _Update this list as work progresses (newest first)._
 
+- **2026-10-22** — Brand palette (pink `#e82053` from the AB Phylline E PDF) replaces teal. `BrandBar` with two logo slots
+  (Sun Pharma left, AB Phylline E right) on register + game HUD; `app.logo` → `app.logos { left, right }`. Finale placeholder recoloured.
 - **2026-10-22** — Registrations saved as JSON only (CSV + readable game name dropped). Tested with XAMPP PHP.
 - **2026-10-22** — "Lungs Game" title removed from screens and config (user found it odd). `Logo` placeholder in register header and game HUD until the real logo arrives.
 - **2026-10-22** — Table game cancelled and removed (code, config, finale image, docs, PHP `GAMES`). Game-selection Home page removed;
@@ -149,4 +152,4 @@ _Update this list as work progresses (newest first)._
 - **2026-10-21** — Register screen scaled up (bigger heading/fields/button, keys h-32, form vertically centred). Total ≈ 103rem, keep it under the 112rem budget in `index.css`.
 - **2026-10-21** — Baseline analysed: both games, registration, result screen working; 3/3 tests pass.
 - TODO: real finale image → `public/media/`, set `games.lungs.finale.image` (placeholder: `media/finale.svg`).
-- TODO: game name logo "AB Phylline E" (wide, ~6.4:1; placeholder boxes use that ratio) → `public/media/`, set `app.logo: 'media/…'`.
+- TODO: logo files from the client (.ai or images): Sun Pharma → `app.logos.left`, AB Phylline E (~6.4:1) → `app.logos.right`, files in `public/media/`.

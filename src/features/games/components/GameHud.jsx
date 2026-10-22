@@ -1,6 +1,6 @@
 import { FaCheck, FaClock, FaForwardFast, FaHouse } from 'react-icons/fa6'
 import { useNavigate } from 'react-router'
-import Logo from '../../../components/ui/Logo'
+import BrandBar from '../../../components/ui/BrandBar'
 import config from '../../../config/config'
 import { formatTime } from '../utils'
 
@@ -19,33 +19,34 @@ export default function GameHud({ timeLeft, correct, total, onSolve }) {
   const navigate = useNavigate()
 
   return (
-    <header className="flex shrink-0 items-center gap-6 px-10 pt-10">
-      <button
-        onClick={() => navigate('/')}
-        aria-label="Exit game"
-        className="grid size-20 place-items-center rounded-full bg-surface text-3xl shadow-card active:scale-95"
-      >
-        <FaHouse />
-      </button>
-      <div className="flex min-w-0 flex-1 justify-center">
-        <Logo className="aspect-[6.4] w-full max-w-[28rem]" />
-      </div>
-      {config.devMode && (
+    <header className="shrink-0 px-10 pt-8">
+      <BrandBar className="h-20" />
+      <div className="mt-6 flex items-center gap-6">
         <button
-          onClick={onSolve}
-          className="flex h-20 items-center gap-3 rounded-full bg-accent px-7 text-2xl font-bold text-white shadow-card active:scale-95"
+          onClick={() => navigate('/')}
+          aria-label="Exit game"
+          className="grid size-20 place-items-center rounded-full bg-surface text-3xl shadow-card active:scale-95"
         >
-          <FaForwardFast /> Finish
+          <FaHouse />
         </button>
-      )}
-      <Stat icon={<FaCheck />}>
-        {correct}/{total}
-      </Stat>
-      {timeLeft != null && (
-        <Stat icon={<FaClock />} danger={timeLeft <= 10}>
-          {formatTime(timeLeft)}
+        <div className="flex-1" />
+        {config.devMode && (
+          <button
+            onClick={onSolve}
+            className="flex h-20 items-center gap-3 rounded-full bg-accent px-7 text-2xl font-bold text-white shadow-card active:scale-95"
+          >
+            <FaForwardFast /> Finish
+          </button>
+        )}
+        <Stat icon={<FaCheck />}>
+          {correct}/{total}
         </Stat>
-      )}
+        {timeLeft != null && (
+          <Stat icon={<FaClock />} danger={timeLeft <= 10}>
+            {formatTime(timeLeft)}
+          </Stat>
+        )}
+      </div>
     </header>
   )
 }
