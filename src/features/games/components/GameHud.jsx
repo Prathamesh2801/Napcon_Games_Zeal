@@ -1,5 +1,6 @@
 import { FaCheck, FaClock, FaForwardFast, FaHouse } from 'react-icons/fa6'
 import { useNavigate } from 'react-router'
+import Logo from '../../../components/ui/Logo'
 import config from '../../../config/config'
 import { formatTime } from '../utils'
 
@@ -14,7 +15,7 @@ function Stat({ icon, danger, children }) {
   )
 }
 
-export default function GameHud({ title, timeLeft, correct, total, onSolve }) {
+export default function GameHud({ timeLeft, correct, total, onSolve }) {
   const navigate = useNavigate()
 
   return (
@@ -26,7 +27,9 @@ export default function GameHud({ title, timeLeft, correct, total, onSolve }) {
       >
         <FaHouse />
       </button>
-      <h1 className="flex-1 truncate text-4xl font-bold">{title}</h1>
+      <div className="flex min-w-0 flex-1 justify-center">
+        <Logo className="aspect-[6.4] w-full max-w-[28rem]" />
+      </div>
       {config.devMode && (
         <button
           onClick={onSolve}

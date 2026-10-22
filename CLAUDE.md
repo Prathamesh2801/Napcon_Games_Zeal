@@ -1,8 +1,8 @@
 # NAPCON Games — touchscreen kiosk
 
-Two drag-and-drop matching games for a NAPCON (pulmonology conference) booth, running full-screen
-on a **1080-wide portrait touchscreen**. Flow: Home → (optional) Register → Play → Finale image (same image whether completed or time ran out)
-→ auto back to Home.
+One drag-and-drop matching game (lungs) for a NAPCON (pulmonology conference) booth, running full-screen
+on a **1080-wide portrait touchscreen**. Flow: Register (landing page) → Play → Finale image (same image whether completed or time ran out)
+→ auto back to Register. `/` redirects to `/register/<first game in config.games>` (or `/play/…` if registration is off).
 
 > Keep this file current. When something changes, update the relevant section and the **Status** log at the bottom.
 
@@ -57,18 +57,17 @@ Deploy: unzip `napcon-games.zip` into XAMPP `htdocs/<folder>`.
 ```
 src/
   config/config.js            ← re-exports window.NAPCON_CONFIG (the real settings are in public/config.js)
-  main.jsx, routes/index.jsx  ← hash router: /, /register/:gameId, /play/:gameId, /result, /finale/:gameId
+  main.jsx, routes/index.jsx  ← hash router: / (redirect), /register/:gameId, /play/:gameId, /result, /finale/:gameId
   layouts/KioskLayout.jsx     ← full-screen shell, blocks context menu, background blobs
-  pages/                      ← HomePage, RegisterPage, PlayPage, ResultPage, FinalePage (thin; data via route state)
+  pages/                      ← RegisterPage (landing), PlayPage, ResultPage, FinalePage (thin; data via route state)
   components/layout/Screen    ← animated page wrapper (absolute inset-0 flex col)
-  components/ui/              ← Button (primary|ghost), OnScreenKeyboard (text|numeric layouts)
+  components/ui/              ← Button (primary|ghost), OnScreenKeyboard (text|numeric layouts), Logo (config.app.logo or dashed placeholder; register header + game HUD)
   features/games/
     index.js                  ← registry { id: { Component, Icon } } — keys MUST match config.games
     hooks/useMatchGame.js     ← shared engine: bank, placed, mistakes, hover, timer, tryPlace, finish, solve (dev)
     utils.js (+ utils.test.js)← shuffle, splitHalf, canPlace, solveBoard, calcScore, formatTime
     components/               ← DragToken, TokenBank, GameHud
     lungs/LungsGame.jsx       ← 5-step cycle (Inflammation → … → More Mucus Production) onto a chain ring over the lungs art, strict order, 3 decoys
-    table/TableGame.jsx       ← SITT half-life table: static header row + first column, 16 value tokens into cells
   features/registration/RegistrationForm.jsx  ← name + phone, on-screen keyboard, validation
   services/sound.js           ← play('correct'|'wrong'|'chainBreak'), files + on/off/volume from config.sound
   services/api/registration.js← POST to config.api.registerUrl (api/register.php); failures backed up + retried
@@ -76,16 +75,14 @@ src/
 public/
   config.js                   ← runtime settings/content (see above)
   api/register.php            ← registration endpoint → api/data/<game>-registrations.{json,csv}
-  media/                      ← lungs.webp, chain.webp, finale-lungs.svg, finale-table.svg, sounds/*
-docs/                         ← client source files per game (1st_game_lungs/, 2nd_game_label/); not shipped
+  media/                      ← lungs.webp, chain.webp, finale.svg, sounds/*
+docs/                         ← client source files (1st_game_lungs/); not shipped
 ```
 
 ## How the games work
 
 - **Token → slot**: `token.slot` is one slot id, or an array of ids when identical tokens are interchangeable. `slot: null` = distractor, never fits.
-  Lungs: `slot` = 1..N. Table: tokens are generated from `config.games.table.cells[row][col]` (slot id `"row-col"`);
-  a token fits every cell with the same text (e.g. the four `~33–57 hrs³`). Row labels use non-breaking hyphens (`‑`, U+2011).
-  Besvil column = `highlight: true` (cream column, bold values, blue gradient badge when "Aligned" lands). Assessment text colours come from `tones`.
+  Lungs: `slot` = 1..N.
 - **Drop detection**: `DragToken` uses `document.elementsFromPoint` and finds the nearest element with `data-slot`.
   A slot stops being a target by removing its `data-slot` (filled cells do this).
 - `tryPlace` returns `'placed' | 'wrong' | 'none'`; wrong = shake + mistake++, none = spring back.
@@ -95,9 +92,9 @@ docs/                         ← client source files per game (1st_game_lungs/,
 - `/result` score screen is only a fallback for a game without `finale`. Score = `correct*pointsPerCorrect − mistakes*penaltyPerMistake + timeLeft*timeBonusPerSecond`, floored at 0.
 
 ### Adding a game
-1. Add its settings under `games.<id>` in `public/config.js` (title, description, timeLimit, strictOrder, tokens…).
+1. Add its settings under `games.<id>` in `public/config.js` (timeLimit, strictOrder, tokens…).
 2. Create `features/games/<id>/<Name>Game.jsx` using `useMatchGame` + `GameHud` + `TokenBank`, rendering `data-slot` targets.
-3. Register it in `features/games/index.js` with an icon. Home lists games from `config.games` automatically.
+3. Register it in `features/games/index.js` with an icon. There is no game-selection page any more: `/` goes to the first game in `config.games`, so a second game needs a picker again.
 4. Add it to `GAMES` in `public/api/register.php` so its registrations are accepted.
 
 ## Conventions
@@ -112,7 +109,7 @@ docs/                         ← client source files per game (1st_game_lungs/,
 - Content/tuning goes in `public/config.js`, not in components.
 - Style: no semicolons, single quotes, 2-space indent, arrow fns, default-export components.
 - **No comments anywhere** (code, `public/config.js`, CSS, HTML) — user preference. Explain things in this file instead.
-- Config cheat sheet (since `public/config.js` has no comments): `devMode` Finish button; `games.*.timeLimit` seconds or null;
+- Config cheat sheet (since `public/config.js` has no comments): `devMode` Finish button; `app.logo` image shown on register + game HUD (empty = dashed "Logo" placeholder); games have no visible title; `games.*.timeLimit` seconds or null;
   `strictOrder` fill 1→N; `slot: null` = decoy; `ring` = % of art (x, y centre, size = diameter of width);
   `finale { image, seconds }`; `api.registerUrl` empty = don't send; in labels a soft hyphen is U+00AD, a non-breaking hyphen is U+2011.
 - Registration must never block play: API errors fall back to localStorage key `napcon:pending-registrations` (retried later).
@@ -122,6 +119,9 @@ docs/                         ← client source files per game (1st_game_lungs/,
 
 _Update this list as work progresses (newest first)._
 
+- **2026-10-22** — "Lungs Game" title removed from screens and config (user found it odd). `Logo` placeholder in register header and game HUD until the real logo arrives.
+- **2026-10-22** — Table game cancelled and removed (code, config, finale image, docs, PHP `GAMES`). Game-selection Home page removed;
+  Register is the landing page (no back button). `config.app.logo` placeholder for the lung game logo.
 - **2026-10-21** — Registrations: XLSX dropped; JSON + CSV per game (`lungs-…`, `table-…`), readable Game column,
   unknown games rejected.
 - **2026-10-21** — PHP registration backend (`public/api/register.php`) saving JSON + CSV + XLSX, tested with XAMPP PHP 8.0
@@ -148,6 +148,5 @@ _Update this list as work progresses (newest first)._
 - **2026-10-21** — Double-tap fullscreen toggle in `KioskLayout` (ignores button/input/`.touch-none`), switch `config.app.doubleTapFullscreen`.
 - **2026-10-21** — Register screen scaled up (bigger heading/fields/button, keys h-32, form vertically centred). Total ≈ 103rem, keep it under the 112rem budget in `index.css`.
 - **2026-10-21** — Baseline analysed: both games, registration, result screen working; 3/3 tests pass.
-- TODO: 2 real finale images (lungs, table) → `public/media/` (or `dist/media/`), set `games.<id>.finale.image`.
-- TODO: Besvil-G header is styled text; drop the real logo in `public/media/` and set `image: 'media/…'` on that column.
-  (The earlier reference also had a 5th column FLU-F + VIL + UME / Near-aligned profile — current `docs/2nd_game_label/2_label_game.jpeg` has 4.)
+- TODO: real finale image → `public/media/`, set `games.lungs.finale.image` (placeholder: `media/finale.svg`).
+- TODO: game name logo "AB Phylline E" (wide, ~6.4:1; placeholder boxes use that ratio) → `public/media/`, set `app.logo: 'media/…'`.

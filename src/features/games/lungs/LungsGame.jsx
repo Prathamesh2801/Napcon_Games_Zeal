@@ -45,7 +45,7 @@ export default function LungsGame({ settings, onFinish }) {
 
   return (
     <>
-      <GameHud title={settings.title} timeLeft={game.timeLeft} correct={game.correct} total={game.total} onSolve={game.solve} />
+      <GameHud timeLeft={game.timeLeft} correct={game.correct} total={game.total} onSolve={game.solve} />
 
       <TokenBank tokens={top} game={game} className="flex-1">
         {t => <TokenFace token={t} className={bankFace} />}

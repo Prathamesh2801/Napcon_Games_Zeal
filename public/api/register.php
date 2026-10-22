@@ -1,7 +1,7 @@
 <?php
 
 const DATA_DIR = __DIR__ . '/data';
-const GAMES = ['lungs' => 'Lungs Game', 'table' => 'SITT Half-life Match'];
+const GAMES = ['lungs' => 'Lungs Game'];
 const COLUMNS = ['id' => 'ID', 'name' => 'Name', 'phone' => 'Phone', 'gameName' => 'Game', 'registeredAt' => 'Registered At', 'savedAt' => 'Saved At'];
 
 header('Content-Type: application/json; charset=utf-8');
