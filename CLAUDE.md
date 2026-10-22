@@ -39,12 +39,11 @@ Deploy: unzip `napcon-games.zip` into XAMPP `htdocs/<folder>`.
 
 - `public/api/register.php` (→ `dist/api/register.php`), plain PHP 8.0+, no Composer, runs under XAMPP Apache.
   POST JSON `{ name, phone, game, registeredAt }` → validates (name letters/space/.'- ≤60, phone empty or 10 digits,
-  game must be a key of `GAMES` in register.php) → `{ ok: true, id }` or 400 `{ ok: false, errors }`.
-- One pair of files per game in `api/data/`: `<game>-registrations.json` (source of truth, rewritten) and
-  `<game>-registrations.csv` (UTF-8 BOM so Excel shows names right, appended); ids count per game. Writes are serialised
-  with `flock` on `data/.lock`. CSV columns: ID, Name, Phone, Game (readable name), Registered At (client ISO),
-  Saved At (server, Asia/Kolkata); JSON also keeps the `game` id.
-- **Adding a game**: also add it to `GAMES` (`'id' => 'Readable Name'`) in `public/api/register.php`, or its
+  game must be in `GAMES` in register.php) → `{ ok: true, id }` or 400 `{ ok: false, errors }`.
+- JSON only (no CSV): one file per game, `api/data/<game>-registrations.json`, rewritten on each save; ids count per game.
+  Writes are serialised with `flock` on `data/.lock`. Fields: id, name, phone, game, registeredAt (client ISO),
+  savedAt (server, Asia/Kolkata).
+- **Adding a game**: also add its id to `GAMES` in `public/api/register.php`, or its
   registrations are rejected.
 - `api/data/.htaccess` = `Require all denied`; data files are gitignored and never in the zip, so redeploying keeps them.
 - Frontend `services/api/registration.js`: success needs `{ ok: true }`; 4xx = rejected (logged, dropped); network/5xx/
@@ -74,7 +73,7 @@ src/
   hooks/useIdleRedirect.js    ← go home after N idle seconds, returns seconds left
 public/
   config.js                   ← runtime settings/content (see above)
-  api/register.php            ← registration endpoint → api/data/<game>-registrations.{json,csv}
+  api/register.php            ← registration endpoint → api/data/<game>-registrations.json
   media/                      ← lungs.webp, chain.webp, finale.svg, sounds/*
 docs/                         ← client source files (1st_game_lungs/); not shipped
 ```
@@ -119,6 +118,7 @@ docs/                         ← client source files (1st_game_lungs/); not shi
 
 _Update this list as work progresses (newest first)._
 
+- **2026-10-22** — Registrations saved as JSON only (CSV + readable game name dropped). Tested with XAMPP PHP.
 - **2026-10-22** — "Lungs Game" title removed from screens and config (user found it odd). `Logo` placeholder in register header and game HUD until the real logo arrives.
 - **2026-10-22** — Table game cancelled and removed (code, config, finale image, docs, PHP `GAMES`). Game-selection Home page removed;
   Register is the landing page (no back button). `config.app.logo` placeholder for the lung game logo.
