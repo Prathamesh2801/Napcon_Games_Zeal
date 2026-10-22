@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import config from '../../../config/config'
 import { play } from '../../../services/sound'
-import { calcScore, canPlace, shuffle, solveBoard } from '../utils'
+import { canPlace, shuffle } from '../utils'
 
 export default function useMatchGame({ tokens, slotOrder, strictOrder = false, timeLimit, onFinish }) {
   const [bank] = useState(() => shuffle(tokens))
   const [placed, setPlaced] = useState({})
-  const [mistakes, setMistakes] = useState(0)
   const [hover, setHover] = useState(null)
   const [timeLeft, setTimeLeft] = useState(timeLimit ?? null)
   const finished = useRef(false)
@@ -19,8 +17,7 @@ export default function useMatchGame({ tokens, slotOrder, strictOrder = false, t
   const finish = () => {
     if (finished.current) return
     finished.current = true
-    const stats = { correct, total, mistakes, timeLeft }
-    onFinish({ ...stats, won: complete, score: calcScore(stats, config.scoring) })
+    onFinish({ won: complete })
   }
 
   useEffect(() => {
@@ -37,7 +34,6 @@ export default function useMatchGame({ tokens, slotOrder, strictOrder = false, t
   const tryPlace = (token, slotId) => {
     if (!slotId || over) return 'none'
     if (!canPlace(token, slotId, { placed, slotOrder, strictOrder })) {
-      setMistakes(m => m + 1)
       play('wrong')
       return 'wrong'
     }
@@ -46,7 +42,5 @@ export default function useMatchGame({ tokens, slotOrder, strictOrder = false, t
     return 'placed'
   }
 
-  const solve = () => !over && setPlaced(solveBoard(tokens, slotOrder))
-
-  return { bank, placed, mistakes, hover, setHover, timeLeft, correct, total, complete, over, tryPlace, finish, solve }
+  return { bank, placed, hover, setHover, timeLeft, correct, total, complete, over, tryPlace, finish }
 }

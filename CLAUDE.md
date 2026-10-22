@@ -28,13 +28,14 @@ Deploy: unzip `napcon-games.zip` into XAMPP `htdocs/<folder>`.
 
 ## Runtime config (no rebuild)
 
-- **All settings + content live in `public/config.js`** (→ `dist/config.js`): a classic script setting `window.NAPCON_CONFIG`,
-  loaded by `index.html` before the app. `src/config/config.js` just re-exports it. Edit `dist/config.js` on the kiosk + refresh.
-- **All media live in `public/media/`** (→ `dist/media/`) and are referenced by relative path strings in config
-  (art, chain, finale images, sound files). Replace a file or point the config at a new one — no rebuild.
-- Don't `import` images/sounds in `src/`; anything content-like belongs in `public/`.
-- `devMode: true` → orange **Finish** button in the game HUD that solves the board (`solveBoard`) so the completion
-  animation + finale can be checked fast. Keep it `false` for the event.
+- **`public/config.js`** (→ `dist/config.js`, edit on the kiosk + refresh) only holds `registerUrl` and `timings`
+  (seconds): `registerIdleSeconds`, `introIdleSeconds`, `gameSeconds` (timer), `completeSeconds` (auto-submit after a full
+  board), `timeUpHomeSeconds` (Try again modal → register), `brokenSeconds` (Slide 5), `finaleSeconds` (Slide 6),
+  `arrowSecondsPerTurn` (cycle arrows on all pages). Missing/invalid values fall back to the defaults.
+- **All texts, labels, image/sound paths, colours and stage data are fixed in `src/config/content.js`** (change = rebuild).
+  `src/config/config.js` clones it and applies the runtime timings/URL; components read everything via `config`.
+- Media live in `public/media/` (→ `dist/media/`), referenced by path strings in `content.js`; don't `import` them in `src/`.
+- No scoring, no result screen, no dev Finish button (all removed).
 
 ## Backend (registrations)
 
@@ -56,21 +57,20 @@ Deploy: unzip `napcon-games.zip` into XAMPP `htdocs/<folder>`.
 
 ```
 src/
-  config/config.js            ← re-exports window.NAPCON_CONFIG (the real settings are in public/config.js)
-  main.jsx, routes/index.jsx  ← hash router: / (redirect), /register/:gameId, /intro/:gameId, /play/:gameId, /break/:gameId, /broken/:gameId, /result, /finale/:gameId
+  config/content.js, config.js← fixed content + runtime timings from public/config.js (see Runtime config)
+  main.jsx, routes/index.jsx  ← hash router: / (redirect), /register/:gameId, /intro/:gameId, /play/:gameId, /break/:gameId, /broken/:gameId, /finale/:gameId
   layouts/KioskLayout.jsx     ← full-screen shell, blocks context menu, background blobs
   pages/                      ← RegisterPage (landing), IntroPage (Slide 2), PlayPage, BreakPage (Slide 4), BrokenPage (Slide 5),
-                                 FinalePage (Slide 6), ResultPage (fallback); layer boxes are rem constants measured from the .ai
+                                 FinalePage (Slide 6); layer boxes are rem constants measured from the .ai
   components/layout/Screen    ← animated page wrapper (absolute inset-0 flex col)
-  components/ui/              ← Button (primary|ghost), OnScreenKeyboard (text|numeric layouts), BrandBar (Sun Pharma logo left, AB Phylline E right, from config.app.logos or dashed placeholders; register header + game HUD top row)
+  components/ui/              ← OnScreenKeyboard (text|numeric layouts)
   features/games/
     index.js                  ← registry { id: { Component, Icon } } — keys MUST match config.games
-    hooks/useMatchGame.js     ← shared engine: bank, placed, mistakes, hover, timer, tryPlace, finish, solve (dev)
-    utils.js (+ utils.test.js)← shuffle, splitHalf, canPlace, solveBoard, calcScore, formatTime
-    components/               ← DragToken, TokenBank, GameHud
+    hooks/useMatchGame.js     ← shared engine: bank, placed, hover, timer, tryPlace, finish → onFinish({ won })
+    utils.js (+ utils.test.js)← shuffle, canPlace
+    components/DragToken.jsx  ← draggable card
     lungs/LungsGame.jsx       ← Slide 3 screen on the centred Stage: 5 "Drop here" boxes round the lungs (SLOTS/ARROWS rem boxes),
                                  5 stage cards in the tray (CARD_LEFTS), strict order, no decoys, 25 s, Submit (ChallengeButton, dim until complete)
-    components/TokenBank, GameHud ← generic, not used by the lungs game any more (kept for future games)
   features/cycle/             ← shared lungs ring: CycleHero (disc + CycleArrows + lungs + 5 icons, positions per layout),
                                  layouts.js (REGISTER_LAYOUT / INTRO_LAYOUT boxes in rem, parts in % of box),
                                  CycleArrows (one module-level rotation shared by both pages), Portal (cyan reveal → game)
@@ -82,12 +82,11 @@ src/
   services/api/registration.js← POST to config.api.registerUrl (api/register.php); failures backed up + retried
   hooks/useIdleRedirect.js    ← go home after N idle seconds, returns seconds left
 public/
-  config.js                   ← runtime settings/content (see above)
+  config.js                   ← runtime timings + registerUrl (see above)
   api/register.php            ← registration endpoint → api/data/<game>-registrations.json
   media/                      ← register/, intro/, game/ (Slide 1–3 art), break/ (Slide 4 layers + Slide 5 banner), finale/ (Slide 6 split into base + header, pack, arc,
                                  item-N-icon/-text layers; drawn with mix-blend-multiply so their white boxes vanish), sounds/*
-docs/                         ← client source files (1st_game_lungs/, AB PHYLLIN 3PG.pdf brand ref, GAME 1.ai register design,
-                                 game1-ai-artboards/ = PNG renders of GAME 1.ai + its embedded lungs bg); not shipped
+docs/                         ← client Slide 1–6.ai + slide-N.png renders (1080 wide); not shipped
 ```
 
 ## How the games work
@@ -96,15 +95,13 @@ docs/                         ← client source files (1st_game_lungs/, AB PHYLL
   Lungs: `slot` = 1..N.
 - **Drop detection**: `DragToken` uses `document.elementsFromPoint` and finds the nearest element with `data-slot`.
   A slot stops being a target by removing its `data-slot` (filled cells do this).
-- `tryPlace` returns `'placed' | 'wrong' | 'none'`; wrong = shake + mistake++, none = spring back.
+- `tryPlace` returns `'placed' | 'wrong' | 'none'`; wrong = shake + wrong sound, none = spring back.
 - `strictOrder`: only the first unfilled slot in `slotOrder` accepts.
-- Finish: complete board (after its animation / `timing.completionDelayMs`) or timer hits 0 → `/finale/:gameId`.
-  One `finale: { image, seconds }` per game, shown for both outcomes (image, home button, auto-home after `seconds`).
-- `/result` score screen is only a fallback for a game without `finale`. Score = `correct*pointsPerCorrect − mistakes*penaltyPerMistake + timeLeft*timeBonusPerSecond`, floored at 0.
+- Finish: complete board (Submit or `completeSeconds`) → `/break` → `/broken` → `/finale`; timer hits 0 → Try again modal.
 
 ### Adding a game
-1. Add its settings under `games.<id>` in `public/config.js` (timeLimit, strictOrder, tokens…).
-2. Create `features/games/<id>/<Name>Game.jsx` using `useMatchGame` + `GameHud` + `TokenBank`, rendering `data-slot` targets.
+1. Add its settings under `games.<id>` in `src/config/content.js` (timeLimit, strictOrder, tokens…).
+2. Create `features/games/<id>/<Name>Game.jsx` using `useMatchGame` + `DragToken`, rendering `data-slot` targets.
 3. Register it in `features/games/index.js` with an icon. There is no game-selection page any more: `/` goes to the first game in `config.games`, so a second game needs a picker again.
 4. Add it to `GAMES` in `public/api/register.php` so its registrations are accepted.
 
@@ -120,18 +117,23 @@ docs/                         ← client source files (1st_game_lungs/, AB PHYLL
 - Colors only via theme tokens: `paper surface line ink muted brand brand-ink brand-soft accent success danger`, `shadow-card`.
   Palette follows the AB Phylline E brand (`docs/AB PHYLLIN 3PG.pdf`): brand pink `#e82053`, ink `#231f20`.
 - Big touch targets (h-20+/h-24 buttons, text-2xl+). No hover-only UI. `touch-none` on draggables.
-- Content/tuning goes in `public/config.js`, not in components.
+- Content goes in `src/config/content.js`, timings in `public/config.js`, not in components.
 - Style: no semicolons, single quotes, 2-space indent, arrow fns, default-export components.
-- **No comments anywhere** (code, `public/config.js`, CSS, HTML) — user preference. Explain things in this file instead.
-- Config cheat sheet (since `public/config.js` has no comments): `devMode` Finish button; `app.logos { left: Sun Pharma, right: AB Phylline E }` image paths (empty = dashed placeholder); games have no visible title; `games.*.timeLimit` seconds or null;
+- **No comments anywhere** (code, config files, CSS, HTML) — user preference. Explain things in this file instead.
+- `content.js` cheat sheet: `games.*.timeLimit` seconds or null;
   `strictOrder` fill 1→N; `slot: null` = decoy; `ring` = % of art (x, y centre, size = diameter of width);
-  `break { media, button, labels[5][lines] }` (Slide 4), `broken { seconds }` (Slide 5), `finale { media, seconds, button }` (Slide 6); `intro` = Slide 2 page (enabled, brush/cycleIcon/tagline images, title, subtitle, quote, button; hero art reused from `registration.screen`); `registration.screen` = register art (media/register/*), title/subtitle/button text, `arrowSecondsPerTurn`; `api.registerUrl` empty = don't send; in labels a soft hyphen is U+00AD, a non-breaking hyphen is U+2011.
+  `break { media, button, labels[5][lines] }` (Slide 4), `broken { seconds }` (Slide 5), `finale { media, seconds, button }` (Slide 6); `intro` = Slide 2 page (enabled, brush/cycleIcon/tagline images, title, subtitle, quote, button; hero art reused from `registration.screen`); `registration.screen` = register art (media/register/*), title/subtitle/button text, `arrowSecondsPerTurn`; `registerUrl` empty = don't send (local backup only); in labels a soft hyphen is U+00AD, a non-breaking hyphen is U+2011.
 - Registration must never block play: API errors fall back to localStorage key `napcon:pending-registrations` (retried later).
 - Keep pure logic in `utils.js` and add a case to `utils.test.js` when it changes.
 
 ## Status / open items
 
 _Update this list as work progresses (newest first)._
+
+- **2026-10-23** — Production cleanup: `public/config.js` reduced to `registerUrl` + `timings`; all content moved to
+  `src/config/content.js`. Removed scoring (`calcScore`, `scoring`, mistakes counter), `/result` + ResultPage, dev Finish
+  button + `solveBoard`, unused GameHud/TokenBank/BrandBar/Button, `splitHalf`/`formatTime`. Registration save re-tested with
+  XAMPP PHP: valid → `{ok:true,id}` appended to `api/data/lungs-registrations.json`, invalid → 400.
 
 - **2026-10-23** — `media/break/stand.webp`: the button's pink glow baked into its bottom rows was faded out (now 600×104).
   Slide 4: no pack at the start; BREAK THE CYCLE → stand flashes, light column, pack rises out of the stand (clipped by an

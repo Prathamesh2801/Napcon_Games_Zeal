@@ -4,7 +4,6 @@ import config from '../config/config'
 import RegisterPage from '../pages/RegisterPage'
 import IntroPage from '../pages/IntroPage'
 import PlayPage from '../pages/PlayPage'
-import ResultPage from '../pages/ResultPage'
 import FinalePage from '../pages/FinalePage'
 import BreakPage from '../pages/BreakPage'
 import BrokenPage from '../pages/BrokenPage'
@@ -25,7 +24,6 @@ export const router = createHashRouter([
       { path: 'register/:gameId', element: <RegisterPage /> },
       { path: 'intro/:gameId', element: <IntroPage /> },
       { path: 'play/:gameId', element: <PlayPage /> },
-      { path: 'result', element: <ResultPage /> },
       { path: 'break/:gameId', element: <BreakPage /> },
       { path: 'broken/:gameId', element: <BrokenPage /> },
       { path: 'finale/:gameId', element: <FinalePage /> },

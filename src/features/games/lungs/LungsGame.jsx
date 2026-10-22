@@ -1,9 +1,7 @@
 import { animate, motion, useMotionValue } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { FaForwardFast } from 'react-icons/fa6'
 import Stage from '../../../components/layout/Stage'
-import config from '../../../config/config'
 import { play } from '../../../services/sound'
 import CycleArrows from '../../cycle/CycleArrows'
 import Portal from '../../cycle/Portal'
@@ -369,14 +367,6 @@ function Round({ settings, onFinish, onRetry }) {
           className="absolute top-[105.5rem] left-[45rem] h-[4.95rem] w-[19.2rem]"
         />
 
-        {config.devMode && (
-          <button
-            onClick={game.solve}
-            className="absolute top-[4rem] left-[3rem] flex h-[4.5rem] items-center gap-3 rounded-full bg-accent px-[1.6rem] text-[1.6rem] font-bold text-white active:scale-95"
-          >
-            <FaForwardFast /> Finish
-          </button>
-        )}
       </Stage>
 
       {timeUp && (
