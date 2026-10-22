@@ -13,12 +13,14 @@ export default function PlayPage() {
 
   const { Component } = games[gameId]
   const finish = result =>
-    settings.finale
+    settings.break
+      ? navigate(`/break/${gameId}`, { replace: true })
+      : settings.finale
       ? navigate(`/finale/${gameId}`, { replace: true })
       : navigate('/result', { replace: true, state: { ...result, gameId, player: state?.player } })
 
   return (
-    <Screen>
+    <Screen animateIn={false} className="bg-night">
       <Component settings={settings} onFinish={finish} />
     </Screen>
   )

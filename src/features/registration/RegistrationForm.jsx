@@ -1,119 +1,89 @@
-import { useRef, useState } from 'react'
-import { FaArrowRight, FaPhone, FaSpinner, FaUser } from 'react-icons/fa6'
-import Button from '../../components/ui/Button'
-import OnScreenKeyboard from '../../components/ui/OnScreenKeyboard'
+import { AnimatePresence, motion } from 'framer-motion'
+import { FaArrowRight, FaCircleExclamation } from 'react-icons/fa6'
+import { LuPhone, LuUser } from 'react-icons/lu'
 import config from '../../config/config'
-import { submitRegistration } from '../../services/api/registration'
 
-const { fields, onScreenKeyboard } = config.registration
+const { onScreenKeyboard } = config.registration
 
-const sanitize = {
-  name: v =>
-    v
-      .replace(/[^\p{L} .'-]/gu, '')
-      .replace(/^\s+/, '')
-      .replace(/\s{2,}/g, ' ')
-      .slice(0, fields.name.maxLength),
-  phone: v => v.replace(/\D/g, '').slice(0, fields.phone.length),
-}
-
-function validate({ name, phone }) {
-  const errors = {}
-  const n = name.trim()
-  if (fields.name.required && !n) errors.name = 'Please enter your name'
-  else if (n && n.length < fields.name.minLength) errors.name = `At least ${fields.name.minLength} characters`
-  if (fields.phone.required && !phone) errors.phone = 'Please enter your phone number'
-  else if (phone && phone.length !== fields.phone.length) errors.phone = `Enter a ${fields.phone.length}-digit number`
-  return errors
-}
-
-function Field({ label, icon, error, active, inputRef, optional, ...props }) {
-  const border = error ? 'border-danger' : active ? 'border-brand' : 'border-line'
+function Field({ label, icon, error, active, inputRef, top, ...props }) {
   return (
-    <label className="block">
-      <span className="mb-3 block text-3xl font-semibold text-muted">
-        {label} {optional && <span className="font-normal">(optional)</span>}
-      </span>
-      <span className={`flex h-36 items-center gap-7 rounded-[2rem] border-4 bg-surface px-10 transition-colors ${border}`}>
-        <span className={`text-4xl ${active ? 'text-brand' : 'text-muted'}`}>{icon}</span>
+    <>
+      <div className="absolute right-[5.56rem] left-[7.25rem] z-10 flex h-[2.6rem] items-center justify-between" style={{ top: `${top - 3.4}rem` }}>
+        <span className="text-[1.75rem] tracking-[0.06em] text-frost drop-shadow-[0_0.1rem_0.3rem_rgb(0_0_0/0.6)]">{label}</span>
+        <AnimatePresence>
+          {error && (
+            <motion.span
+              key={error}
+              initial={{ opacity: 0, x: 0 }}
+              animate={{ opacity: 1, x: [0, -10, 10, -6, 6, 0] }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="flex items-center gap-2 rounded-full bg-danger px-[1.1rem] py-[0.3rem] text-[1.5rem] font-semibold text-white shadow-[0_0.3rem_1rem_rgb(0_0_0/0.4)]"
+            >
+              <FaCircleExclamation className="text-[1.4rem]" />
+              {error}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </div>
+      <motion.label
+        animate={{
+          boxShadow: active
+            ? '0 0 0 0.3rem rgb(0 240 249 / 1), 0 0 2.5rem 0.4rem rgb(0 240 249 / 0.55)'
+            : error
+              ? '0 0 0 0.3rem rgb(232 32 83 / 1), 0 0 1.8rem 0.2rem rgb(232 32 83 / 0.55)'
+              : '0 0 0 0 rgb(0 240 249 / 0), 0 0.5rem 1.5rem -0.5rem rgb(0 0 0 / 0.35)',
+        }}
+        transition={{ duration: 0.25 }}
+        className="absolute left-[5.56rem] flex h-[6.4rem] w-[55.75rem] items-center gap-6 rounded-[1.25rem] bg-white px-[2.6rem] shadow-[inset_0_-0.3rem_0_#dbe3f3]"
+        style={{ top: `${top}rem` }}
+      >
+        <span className="text-[2.6rem] text-night-ink">{icon}</span>
         <input
           ref={inputRef}
           autoComplete="off"
           inputMode={onScreenKeyboard ? 'none' : undefined}
-          className="h-full w-full bg-transparent text-5xl font-medium outline-none placeholder:text-muted/40"
+          className="h-full w-full bg-transparent text-[1.95rem] text-ink caret-night-ink outline-none placeholder:text-hint"
           {...props}
         />
-      </span>
-      <span className="mt-2 block h-9 text-2xl text-danger">{error}</span>
-    </label>
+      </motion.label>
+    </>
   )
 }
 
-export default function RegistrationForm({ gameId, onDone }) {
-  const [values, setValues] = useState({ name: '', phone: '' })
-  const [errors, setErrors] = useState({})
-  const [active, setActive] = useState('name')
-  const [submitting, setSubmitting] = useState(false)
-  const inputs = useRef({})
-
-  const update = (field, value) => {
-    setValues(v => ({ ...v, [field]: sanitize[field](value) }))
-    setErrors(e => ({ ...e, [field]: undefined }))
-  }
-
-  const press = key => {
-    const cur = values[active]
-    if (key === 'backspace') return update(active, cur.slice(0, -1))
-    if (key === 'clear') return update(active, '')
-    if (key === 'space') return update(active, cur + ' ')
-    const capitalize = active === 'name' && (!cur || cur.endsWith(' '))
-    update(active, cur + (capitalize ? key.toUpperCase() : key))
-  }
-
-  const submit = async e => {
-    e.preventDefault()
-    const errs = validate(values)
-    setErrors(errs)
-    const firstError = Object.keys(errs)[0]
-    if (firstError) {
-      setActive(firstError)
-      inputs.current[firstError]?.focus()
-      return
-    }
-    setSubmitting(true)
-    const player = { name: values.name.trim(), phone: values.phone }
-    await submitRegistration({ ...player, game: gameId, registeredAt: new Date().toISOString() })
-    onDone(player)
-  }
-
-  const fieldProps = field => ({
-    value: values[field],
-    error: errors[field],
-    active: active === field,
-    optional: !fields[field].required,
-    inputRef: el => (inputs.current[field] = el),
-    onFocus: () => setActive(field),
-    onChange: e => update(field, e.target.value),
-  })
+export default function RegistrationForm({ screen, fieldProps, submitting }) {
+  const [first, second] = screen.title
 
   return (
-    <form onSubmit={submit} noValidate className="flex flex-1 flex-col">
-      <div className="flex flex-1 flex-col justify-center px-16 py-10">
-        <h1 className="text-7xl font-bold">Let's get you started</h1>
-        <p className="mt-5 text-4xl text-muted">Enter your details to play</p>
+    <div className="relative h-[47.75rem] font-display">
+      <img src={screen.brush} alt="" className="absolute top-0 left-[2.81rem] h-[10rem] w-[61.31rem]" />
+      <h1 className="absolute inset-x-0 top-0 flex h-[10rem] items-center justify-center gap-[2.2rem] pb-[0.4rem] text-[5.3rem] leading-none tracking-[0.01em]">
+        <span className="text-frost">{first}</span>
+        <span className="text-cyan">{second}</span>
+      </h1>
+      <p className="absolute inset-x-0 top-[9.9rem] text-center text-[2.25rem] tracking-[0.05em] text-frost">{screen.subtitle}</p>
 
-        <div className="mt-16 space-y-5">
-          <Field label="Full name" icon={<FaUser />} placeholder="Your name" autoFocus {...fieldProps('name')} />
-          <Field label="Phone number" icon={<FaPhone />} type="tel" placeholder="10-digit mobile" {...fieldProps('phone')} />
-        </div>
+      <Field label="Full Name :" icon={<LuUser />} placeholder="Enter your full name" top={16.9} {...fieldProps('name')} />
+      <Field label="Phone Number:" icon={<LuPhone />} placeholder="Enter your phone number" top={28.4} {...fieldProps('phone')} />
 
-        <Button type="submit" disabled={submitting} className="mt-10 h-32! w-full text-4xl!">
-          {submitting ? <FaSpinner className="animate-spin" /> : <FaArrowRight />}
-          {submitting ? 'Starting…' : 'Start game'}
-        </Button>
-      </div>
-
-      {onScreenKeyboard && <OnScreenKeyboard layout={active === 'phone' ? 'numeric' : 'text'} onKey={press} />}
-    </form>
+      <motion.button
+        type="submit"
+        disabled={submitting}
+        whileTap={{ scale: 0.95 }}
+        animate={{ boxShadow: ['0 0 1.5rem 0.2rem rgb(0 240 249 / 0.35)', '0 0 2.8rem 0.6rem rgb(0 240 249 / 0.6)', '0 0 1.5rem 0.2rem rgb(0 240 249 / 0.35)'] }}
+        transition={{ boxShadow: { duration: 2.4, repeat: Infinity, ease: 'easeInOut' } }}
+        className="absolute top-[38.9rem] left-[13rem] flex h-[8.25rem] w-[41rem] items-center justify-center gap-8 overflow-hidden rounded-full border-[0.3rem] border-cyan/80 bg-[linear-gradient(90deg,#0a2a9e_0%,#0b4fcf_45%,#0d8fe0_80%,#12c9e6_100%)] text-[3.3rem] tracking-[0.12em] text-frost uppercase"
+      >
+        <motion.span
+          aria-hidden
+          initial={{ x: '-120%' }}
+          animate={{ x: '320%' }}
+          transition={{ duration: 1.6, repeat: Infinity, repeatDelay: 2.2, ease: 'easeInOut' }}
+          className="absolute inset-y-0 left-0 w-1/4 -skew-x-20 bg-white/25 blur-md"
+        />
+        <span className="relative">{screen.button}</span>
+        <FaArrowRight className="relative text-[2.6rem]" />
+      </motion.button>
+    </div>
   )
 }
