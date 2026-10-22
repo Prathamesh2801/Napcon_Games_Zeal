@@ -75,7 +75,8 @@ public/
   config.js                   ← runtime settings/content (see above)
   api/register.php            ← registration endpoint → api/data/<game>-registrations.json
   media/                      ← lungs.webp, chain.webp, finale.svg, sounds/*
-docs/                         ← client source files (1st_game_lungs/); not shipped
+docs/                         ← client source files (1st_game_lungs/, AB PHYLLIN 3PG.pdf brand ref, GAME 1.ai register design,
+                                 game1-ai-artboards/ = PNG renders of GAME 1.ai + its embedded lungs bg); not shipped
 ```
 
 ## How the games work
@@ -119,6 +120,10 @@ docs/                         ← client source files (1st_game_lungs/); not shi
 
 _Update this list as work progresses (newest first)._
 
+- **2026-10-22** — Client sent `docs/GAME 1.ai` (Illustrator, PDF-compatible: open with PyMuPDF `fitz.open(path, filetype='pdf')`).
+  3 artboards 900×1600 for the register page: light (white + pink/peach corner shapes, Sun Pharma | No.1 logo top centre, orange-
+  bordered fields, peach START GAME), dark (lungs bg `dark-bg-lungs-image.png` under a `#231f20` overlay, white text), bg only.
+  Myriad Pro; orange accents `#f05a28 #f7931c #fcd1b0`. **Waiting for creatives to confirm** light vs dark + palette before implementing.
 - **2026-10-22** — Brand palette (pink `#e82053` from the AB Phylline E PDF) replaces teal. `BrandBar` with two logo slots
   (Sun Pharma left, AB Phylline E right) on register + game HUD; `app.logo` → `app.logos { left, right }`. Finale placeholder recoloured.
 - **2026-10-22** — Registrations saved as JSON only (CSV + readable game name dropped). Tested with XAMPP PHP.
