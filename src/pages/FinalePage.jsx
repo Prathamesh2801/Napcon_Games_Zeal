@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useEffect } from 'react'
 import { FaRotateRight } from 'react-icons/fa6'
-import { Navigate, useNavigate, useParams } from 'react-router'
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router'
 import Screen from '../components/layout/Screen'
 import Stage from '../components/layout/Stage'
 import config from '../config/config'
@@ -35,6 +35,8 @@ function Layer({ src, rect, ...motionProps }) {
 export default function FinalePage() {
   const { gameId } = useParams()
   const navigate = useNavigate()
+  const { state } = useLocation()
+  const fromBreak = !!state?.fromBreak
   const finale = config.games[gameId]?.finale
   const home = () => navigate('/', { replace: true })
 
@@ -50,7 +52,7 @@ export default function FinalePage() {
   const settle = ITEM_START + ITEMS.length * ITEM_GAP + 0.8
 
   return (
-    <Screen className="bg-white">
+    <Screen animateIn={!fromBreak} className="bg-white">
       <Stage>
         <motion.img
           src={src('base')}
@@ -72,11 +74,11 @@ export default function FinalePage() {
         <Layer
           src={src('pack')}
           rect={PACK}
-          initial={{ opacity: 0, y: '5rem', scale: 0.85, rotate: -4 }}
-          animate={{ opacity: 1, y: [null, 0, '-0.6rem', 0], scale: 1, rotate: 0 }}
+          initial={{ opacity: fromBreak ? 1 : 0 }}
+          animate={{ opacity: 1, y: ['0rem', '-0.6rem', '0rem'] }}
           transition={{
-            default: { delay: 0.55, type: 'spring', stiffness: 120, damping: 14 },
-            y: { delay: 0.55, duration: 4.5, times: [0, 0.2, 0.6, 1], repeat: Infinity, repeatDelay: 0.5, ease: 'easeInOut' },
+            opacity: { duration: 0.6 },
+            y: { delay: 0.6, duration: 4, repeat: Infinity, repeatDelay: 0.5, ease: 'easeInOut' },
           }}
         />
 

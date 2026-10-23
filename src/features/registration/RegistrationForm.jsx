@@ -1,38 +1,21 @@
-import { AnimatePresence, motion } from 'framer-motion'
-import { FaArrowRight, FaCircleExclamation } from 'react-icons/fa6'
+import { motion } from 'framer-motion'
+import { FaArrowRight } from 'react-icons/fa6'
 import { LuPhone, LuUser } from 'react-icons/lu'
 import config from '../../config/config'
 
 const { onScreenKeyboard } = config.registration
 
-function Field({ label, icon, error, active, inputRef, top, ...props }) {
+function Field({ label, icon, active, inputRef, top, ...props }) {
   return (
     <>
-      <div className="absolute right-[5.56rem] left-[7.25rem] z-10 flex h-[2.6rem] items-center justify-between" style={{ top: `${top - 3.4}rem` }}>
+      <div className="absolute right-[5.56rem] left-[7.25rem] z-10 flex h-[2.6rem] items-center" style={{ top: `${top - 3.4}rem` }}>
         <span className="text-[1.75rem] tracking-[0.06em] text-frost drop-shadow-[0_0.1rem_0.3rem_rgb(0_0_0/0.6)]">{label}</span>
-        <AnimatePresence>
-          {error && (
-            <motion.span
-              key={error}
-              initial={{ opacity: 0, x: 0 }}
-              animate={{ opacity: 1, x: [0, -10, 10, -6, 6, 0] }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.4 }}
-              className="flex items-center gap-2 rounded-full bg-danger px-[1.1rem] py-[0.3rem] text-[1.5rem] font-semibold text-white shadow-[0_0.3rem_1rem_rgb(0_0_0/0.4)]"
-            >
-              <FaCircleExclamation className="text-[1.4rem]" />
-              {error}
-            </motion.span>
-          )}
-        </AnimatePresence>
       </div>
       <motion.label
         animate={{
           boxShadow: active
             ? '0 0 0 0.3rem rgb(0 240 249 / 1), 0 0 2.5rem 0.4rem rgb(0 240 249 / 0.55)'
-            : error
-              ? '0 0 0 0.3rem rgb(232 32 83 / 1), 0 0 1.8rem 0.2rem rgb(232 32 83 / 0.55)'
-              : '0 0 0 0 rgb(0 240 249 / 0), 0 0.5rem 1.5rem -0.5rem rgb(0 0 0 / 0.35)',
+            : '0 0 0 0 rgb(0 240 249 / 0), 0 0.5rem 1.5rem -0.5rem rgb(0 0 0 / 0.35)',
         }}
         transition={{ duration: 0.25 }}
         className="absolute left-[5.56rem] flex h-[6.4rem] w-[55.75rem] items-center gap-6 rounded-[1.25rem] bg-white px-[2.6rem] shadow-[inset_0_-0.3rem_0_#dbe3f3]"

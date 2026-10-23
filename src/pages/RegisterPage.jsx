@@ -52,7 +52,6 @@ export default function RegisterPage() {
     e.preventDefault()
     if (leaving) return
     const player = form.check()
-    if (!player) return
     form.focus(null)
     setLeaving(true)
     animate(speed, toIntro ? HANDOFF_SPEED : 1100, { duration: toIntro ? MORPH_MS / 1000 : 1.1, ease: 'easeIn' })

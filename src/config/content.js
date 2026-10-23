@@ -36,10 +36,6 @@ const content = {
       button: 'Start game',
       arrowSecondsPerTurn: 18,
     },
-    fields: {
-      name: { required: false, minLength: 2, maxLength: 40 },
-      phone: { required: false, length: 10 },
-    },
   },
 
   intro: {
@@ -77,7 +73,6 @@ const content = {
           ['Exacerbations and', 'further airway injury'],
         ],
       },
-      broken: { seconds: 10 },
       finale: { media: 'media/finale', seconds: 15, button: 'Play again' },
       title: ['Vicious Cycle', 'Challenge'],
       heading: 'Build the vicious cycle',

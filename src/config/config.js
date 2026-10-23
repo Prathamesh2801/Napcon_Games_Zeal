@@ -15,7 +15,6 @@ lungs.arrowSecondsPerTurn = pick(t.arrowSecondsPerTurn, lungs.arrowSecondsPerTur
 lungs.timeLimit = pick(t.gameSeconds, lungs.timeLimit)
 lungs.completeSeconds = pick(t.completeSeconds, lungs.completeSeconds)
 lungs.timeUp.homeSeconds = pick(t.timeUpHomeSeconds, lungs.timeUp.homeSeconds)
-lungs.broken.seconds = pick(t.brokenSeconds, lungs.broken.seconds)
 lungs.finale.seconds = pick(t.finaleSeconds, lungs.finale.seconds)
 
 export default config

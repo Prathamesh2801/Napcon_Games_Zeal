@@ -6,7 +6,6 @@ window.NAPCON_CONFIG = {
     gameSeconds: 25,
     completeSeconds: 6,
     timeUpHomeSeconds: 60,
-    brokenSeconds: 10,
     finaleSeconds: 15,
     arrowSecondsPerTurn: 18,
   },

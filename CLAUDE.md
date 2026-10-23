@@ -2,7 +2,8 @@
 
 One drag-and-drop matching game (lungs) for a NAPCON (pulmonology conference) booth, running full-screen
 on a **1080-wide portrait touchscreen**. Flow: Register (Slide 1) → Intro (Slide 2, "Start the challenge") → Play (Slide 3; time up = Try again modal)
-→ completed → Break (Slide 4, "Break the cycle") → Broken (Slide 5, `broken.seconds`) → Finale (Slide 6 product page, Play again / auto after `finale.seconds`)
+→ completed → Break (Slide 4: chain breaks, lungs turn healthy, pack rises from the stand and flies into place) → Finale (Slide 6 product page,
+Play again / auto after `finale.seconds`). Slide 5 is not used.
 → Register. `/` redirects to `/register/<first game in config.games>` (or `/intro/…` / `/play/…` if registration / intro is off).
 
 > Keep this file current. When something changes, update the relevant section and the **Status** log at the bottom.
@@ -30,7 +31,7 @@ Deploy: unzip `napcon-games.zip` into XAMPP `htdocs/<folder>`.
 
 - **`public/config.js`** (→ `dist/config.js`, edit on the kiosk + refresh) only holds `registerUrl` and `timings`
   (seconds): `registerIdleSeconds`, `introIdleSeconds`, `gameSeconds` (timer), `completeSeconds` (auto-submit after a full
-  board), `timeUpHomeSeconds` (Try again modal → register), `brokenSeconds` (Slide 5), `finaleSeconds` (Slide 6),
+  board), `timeUpHomeSeconds` (Try again modal → register), `finaleSeconds` (Slide 6),
   `arrowSecondsPerTurn` (cycle arrows on all pages). Missing/invalid values fall back to the defaults.
 - **All texts, labels, image/sound paths, colours and stage data are fixed in `src/config/content.js`** (change = rebuild).
   `src/config/config.js` clones it and applies the runtime timings/URL; components read everything via `config`.
@@ -40,8 +41,8 @@ Deploy: unzip `napcon-games.zip` into XAMPP `htdocs/<folder>`.
 ## Backend (registrations)
 
 - `public/api/register.php` (→ `dist/api/register.php`), plain PHP 8.0+, no Composer, runs under XAMPP Apache.
-  POST JSON `{ name, phone, game, registeredAt }` → validates (name letters/space/.'- ≤60, phone empty or 10 digits,
-  game must be in `GAMES` in register.php) → `{ ok: true, id }` or 400 `{ ok: false, errors }`.
+  POST JSON `{ name, phone, game, registeredAt }` → no validation (values trimmed, cut at 200 chars; only `game` must be in
+  `GAMES` in register.php) → `{ ok: true, id }` or 400 `{ ok: false, errors }`.
 - JSON only (no CSV): one file per game, `api/data/<game>-registrations.json`, rewritten on each save; ids count per game.
   Writes are serialised with `flock` on `data/.lock`. Fields: id, name, phone, game, registeredAt (client ISO),
   savedAt (server, Asia/Kolkata).
@@ -58,9 +59,9 @@ Deploy: unzip `napcon-games.zip` into XAMPP `htdocs/<folder>`.
 ```
 src/
   config/content.js, config.js← fixed content + runtime timings from public/config.js (see Runtime config)
-  main.jsx, routes/index.jsx  ← hash router: / (redirect), /register/:gameId, /intro/:gameId, /play/:gameId, /break/:gameId, /broken/:gameId, /finale/:gameId
+  main.jsx, routes/index.jsx  ← hash router: / (redirect), /register/:gameId, /intro/:gameId, /play/:gameId, /break/:gameId, /finale/:gameId
   layouts/KioskLayout.jsx     ← full-screen shell, blocks context menu, background blobs
-  pages/                      ← RegisterPage (landing), IntroPage (Slide 2), PlayPage, BreakPage (Slide 4), BrokenPage (Slide 5),
+  pages/                      ← RegisterPage (landing), IntroPage (Slide 2), PlayPage, BreakPage (Slide 4),
                                  FinalePage (Slide 6); layer boxes are rem constants measured from the .ai
   components/layout/Screen    ← animated page wrapper (absolute inset-0 flex col)
   components/ui/              ← OnScreenKeyboard (text|numeric layouts)
@@ -77,14 +78,14 @@ src/
   features/intro/ChallengeButton.jsx ← pink pill, glow pulse, shine sweep, twinkling sparkles
   features/registration/      ← Slide 1.ai register screen:
                                  RegistrationForm (title/fields/button, absolute rem positions from the artboard),
-                                 useRegistrationForm (values, validation, keyboard keys)
+                                 useRegistrationForm (values, keyboard keys; no validation, empty submit allowed)
   services/sound.js           ← play('correct'|'wrong'|'chainBreak'), files + on/off/volume from config.sound
   services/api/registration.js← POST to config.api.registerUrl (api/register.php); failures backed up + retried
   hooks/useIdleRedirect.js    ← go home after N idle seconds, returns seconds left
 public/
   config.js                   ← runtime timings + registerUrl (see above)
   api/register.php            ← registration endpoint → api/data/<game>-registrations.json
-  media/                      ← register/, intro/, game/ (Slide 1–3 art), break/ (Slide 4 layers + Slide 5 banner), finale/ (Slide 6 split into base + header, pack, arc,
+  media/                      ← register/, intro/, game/ (Slide 1–3 art), break/ (Slide 4 layers), finale/ (Slide 6 split into base + header, pack, arc,
                                  item-N-icon/-text layers; drawn with mix-blend-multiply so their white boxes vanish), sounds/*
 docs/                         ← client Slide 1–6.ai + slide-N.png renders (1080 wide); not shipped
 ```
@@ -97,7 +98,7 @@ docs/                         ← client Slide 1–6.ai + slide-N.png renders (1
   A slot stops being a target by removing its `data-slot` (filled cells do this).
 - `tryPlace` returns `'placed' | 'wrong' | 'none'`; wrong = shake + wrong sound, none = spring back.
 - `strictOrder`: only the first unfilled slot in `slotOrder` accepts.
-- Finish: complete board (Submit or `completeSeconds`) → `/break` → `/broken` → `/finale`; timer hits 0 → Try again modal.
+- Finish: complete board (Submit or `completeSeconds`) → `/break` → `/finale`; timer hits 0 → Try again modal.
 
 ### Adding a game
 1. Add its settings under `games.<id>` in `src/config/content.js` (timeLimit, strictOrder, tokens…).
@@ -122,13 +123,21 @@ docs/                         ← client Slide 1–6.ai + slide-N.png renders (1
 - **No comments anywhere** (code, config files, CSS, HTML) — user preference. Explain things in this file instead.
 - `content.js` cheat sheet: `games.*.timeLimit` seconds or null;
   `strictOrder` fill 1→N; `slot: null` = decoy; `ring` = % of art (x, y centre, size = diameter of width);
-  `break { media, button, labels[5][lines] }` (Slide 4), `broken { seconds }` (Slide 5), `finale { media, seconds, button }` (Slide 6); `intro` = Slide 2 page (enabled, brush/cycleIcon/tagline images, title, subtitle, quote, button; hero art reused from `registration.screen`); `registration.screen` = register art (media/register/*), title/subtitle/button text, `arrowSecondsPerTurn`; `registerUrl` empty = don't send (local backup only); in labels a soft hyphen is U+00AD, a non-breaking hyphen is U+2011.
+  `break { media, button, labels[5][lines] }` (Slide 4), `finale { media, seconds, button }` (Slide 6); `intro` = Slide 2 page (enabled, brush/cycleIcon/tagline images, title, subtitle, quote, button; hero art reused from `registration.screen`); `registration.screen` = register art (media/register/*), title/subtitle/button text, `arrowSecondsPerTurn`; `registerUrl` empty = don't send (local backup only); in labels a soft hyphen is U+00AD, a non-breaking hyphen is U+2011.
 - Registration must never block play: API errors fall back to localStorage key `napcon:pending-registrations` (retried later).
 - Keep pure logic in `utils.js` and add a case to `utils.test.js` when it changes.
 
 ## Status / open items
 
 _Update this list as work progresses (newest first)._
+
+- **2026-10-23** — Slide 5 removed (BrokenPage, `/broken`, banner.webp, `brokenSeconds`). Slide 4 sequence on BREAK THE CYCLE:
+  charge (chain spins up, sick lungs pulse) → break (shards, rings, flash; sick lungs fade, Slide 5 healthy lungs (`media/break/healthy-lungs.webp`,
+  colour-segmented out of Slide 5's flat background, script `lungs5.py` in the scratchpad) grow in at `HEALTHY` with a halo) → rise (pack comes up out of the stand) → out (pack flies `FLIGHT` to the finale pack position over a
+  white fade, finale pack crossfades in) → `/finale` with `state.fromBreak` (no page fade, pack already in place, rest animates in).
+
+- **2026-10-23** — Registration validation removed completely (user request): no sanitising, length limits, required checks or
+  error pills in the form; `registration.fields` dropped; PHP accepts any name/phone (trim + 200-char cut), only checks `game`.
 
 - **2026-10-23** — Production cleanup: `public/config.js` reduced to `registerUrl` + `timings`; all content moved to
   `src/config/content.js`. Removed scoring (`calcScore`, `scoring`, mistakes counter), `/result` + ResultPage, dev Finish

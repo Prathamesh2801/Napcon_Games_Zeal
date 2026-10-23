@@ -11,7 +11,10 @@ import { play } from '../services/sound'
 
 const CHAIN = [0.222, 30.09, 62.97, 53.084]
 const LUNGS = [20.14, 42.19, 26.046, 24.398]
+const HEALTHY = [15.383, 32.945, 35.893, 41.466]
 const PACK = [19.463, 76.505, 27.963, 18.265]
+const FINALE_PACK = [18.25, 37.8125, 28.3125, 23.5625]
+const FLIGHT = { x: '-0.78rem', y: '-36.2rem', scale: 1.077 }
 const STAND = [0, 86.274, 66.9, 11.663]
 const CENTRE = [31.707, 56.632]
 const BADGES = [
@@ -22,10 +25,11 @@ const BADGES = [
   { box: [4.176, 38.643, 16.778, 15.503], pill: 63.47 },
 ]
 const SHARDS = 10
+const CHARGE_MS = 1300
+const BREAK_MS = 1900
 const RISE_MS = 1500
-const CHARGE_MS = 1400
-const BREAK_MS = 1700
-const OUT_MS = 500
+const HOLD_MS = 700
+const OUT_MS = 1600
 const ease = [0.22, 1, 0.36, 1]
 
 const box = ([left, top, width, height]) => ({
@@ -86,24 +90,25 @@ export default function BreakPage() {
   const art = settings.break
   const src = name => `${art.media}/${name}.webp`
   const [first, second] = settings.title
-  const rising = phase === 'rise'
   const charging = phase === 'charge'
-  const broken = phase === 'break' || phase === 'out'
+  const rising = phase === 'rise'
+  const leaving = phase === 'out'
+  const broken = ['break', 'rise', 'out'].includes(phase)
+  const risen = rising || leaving
 
   const start = async () => {
     if (phase !== 'idle') return
-    setPhase('rise')
-    await wait(RISE_MS)
     setPhase('charge')
     animate(speed, 900, { duration: CHARGE_MS / 1000, ease: 'easeIn' })
     await wait(CHARGE_MS)
     play('chainBreak')
     setPhase('break')
-    animate(speed, 40, { duration: 1.2, ease: 'easeOut' })
     await wait(BREAK_MS)
+    setPhase('rise')
+    await wait(RISE_MS + HOLD_MS)
     setPhase('out')
     await wait(OUT_MS)
-    navigate(`/broken/${gameId}`, { replace: true, state: { fromBreak: true } })
+    navigate(`/finale/${gameId}`, { replace: true, state: { fromBreak: true } })
   }
 
   return (
@@ -158,9 +163,8 @@ export default function BreakPage() {
           className="absolute"
         >
           <motion.div style={{ rotate: spin }} className="absolute inset-0">
-            {broken ? (
-              <Shards src={src('chain')} />
-            ) : (
+            {phase === 'break' && <Shards src={src('chain')} />}
+            {!broken && (
               <motion.img
                 src={src('chain')}
                 alt=""
@@ -188,41 +192,56 @@ export default function BreakPage() {
 
         <motion.div
           initial={{ opacity: 0, scale: 0.7 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3, duration: 0.8, ease }}
+          animate={broken ? { opacity: 0, scale: 1.15 } : { opacity: 1, scale: 1 }}
+          transition={broken ? { duration: 0.8, ease: 'easeOut' } : { delay: 0.3, duration: 0.8, ease }}
           style={box(LUNGS)}
           className="absolute"
         >
           <motion.img
             src={src('lungs')}
             alt=""
-            animate={
-              broken
-                ? { opacity: 0, scale: 1.08 }
-                : {
-                    opacity: 1,
-                    scale: [1, 1.035, 1],
-                    filter: [
-                      'drop-shadow(0 0 0.4rem rgb(255 60 60 / 0.3))',
-                      'drop-shadow(0 0 1.6rem rgb(255 60 60 / 0.75))',
-                      'drop-shadow(0 0 0.4rem rgb(255 60 60 / 0.3))',
-                    ],
-                  }
-            }
-            transition={broken ? { duration: 0.6 } : { duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+            animate={{
+              scale: charging ? [1, 1.06, 0.97, 1.05] : [1, 1.035, 1],
+              filter: [
+                'drop-shadow(0 0 0.4rem rgb(255 60 60 / 0.3))',
+                'drop-shadow(0 0 1.6rem rgb(255 60 60 / 0.75))',
+                'drop-shadow(0 0 0.4rem rgb(255 60 60 / 0.3))',
+              ],
+            }}
+            transition={charging ? { duration: CHARGE_MS / 1000 } : { duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
             className="absolute inset-0 h-full w-full"
           />
-          {broken && (
-            <motion.img
-              src={config.registration.screen.lungs}
-              alt=""
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: [0.85, 1.12, 1.04] }}
-              transition={{ duration: 0.9, ease: 'easeOut' }}
-              className="absolute inset-0 h-full w-full drop-shadow-[0_0_2rem_rgb(255_120_160/0.8)]"
-            />
-          )}
         </motion.div>
+
+        {broken && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.72, filter: 'brightness(2.2)' }}
+            animate={{ opacity: 1, scale: 1, filter: 'brightness(1)' }}
+            transition={{ delay: 0.25, duration: 1.3, ease }}
+            style={box(HEALTHY)}
+            className="absolute"
+          >
+            <motion.div
+              animate={{ opacity: [0.35, 0.75, 0.35], scale: [0.9, 1.05, 0.9] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute -inset-[20%] rounded-full bg-[radial-gradient(circle,rgb(127_246_255/0.45)_0%,rgb(0_120_255/0.15)_45%,transparent_70%)]"
+            />
+            <motion.img
+              src={src('healthy-lungs')}
+              alt=""
+              animate={{
+                scale: [1, 1.05, 1],
+                filter: [
+                  'drop-shadow(0 0 1rem rgb(255 120 160 / 0.45))',
+                  'drop-shadow(0 0 2.6rem rgb(255 120 160 / 0.85))',
+                  'drop-shadow(0 0 1rem rgb(255 120 160 / 0.45))',
+                ],
+              }}
+              transition={{ delay: 1.5, duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+              className="relative h-full w-full"
+            />
+          </motion.div>
+        )}
 
         {BADGES.map((b, i) => (
           <motion.div
@@ -231,9 +250,7 @@ export default function BreakPage() {
             animate={
               broken
                 ? { opacity: 0, scale: 0.6, ...away(b.box, 22), rotate: i % 2 ? 25 : -25 }
-                : charging
-                  ? { opacity: 1, scale: 0.92, x: 0, y: 0, rotate: 0 }
-                  : { opacity: 1, scale: 1, x: 0, y: 0, rotate: 0 }
+                : { opacity: 1, scale: charging ? 0.92 : 1, x: 0, y: 0, rotate: 0 }
             }
             transition={
               broken
@@ -261,18 +278,16 @@ export default function BreakPage() {
           </motion.div>
         ))}
 
-        <motion.div
-          initial={{ opacity: 0, scaleY: 0 }}
-          animate={
-            charging
-              ? { opacity: [0, 0.9, 1], scaleY: 1 }
-              : broken
-                ? { opacity: 0, scaleY: 1.3 }
-                : { opacity: 0, scaleY: 0 }
-          }
-          transition={{ duration: charging ? CHARGE_MS / 1000 : 0.5, ease: 'easeIn' }}
-          className="absolute top-[52rem] left-[29.7rem] h-[28rem] w-[8rem] origin-bottom rounded-full bg-[linear-gradient(0deg,rgb(255_255_255/0.95)_0%,rgb(127_246_255/0.8)_45%,rgb(0_240_249/0)_100%)] blur-[1.2rem]"
-        />
+        {phase === 'break' &&
+          [0, 0.12, 0.24].map(delay => (
+            <motion.div
+              key={delay}
+              initial={{ opacity: 0, scale: 0.3 }}
+              animate={{ opacity: [0, 1, 0], scale: 3 }}
+              transition={{ delay, duration: 1, ease: 'easeOut' }}
+              className="pointer-events-none absolute top-[41.6rem] left-[16.7rem] size-[30rem] rounded-full border-[0.5rem] border-cyan shadow-[0_0_3rem_1rem_rgb(0_240_249/0.6),inset_0_0_3rem_1rem_rgb(0_240_249/0.5)]"
+            />
+          ))}
 
         {rising && (
           <motion.div
@@ -283,49 +298,7 @@ export default function BreakPage() {
           />
         )}
 
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[94.8rem] overflow-hidden">
-          <motion.div
-            initial={{ y: '19rem' }}
-            animate={
-              phase === 'idle'
-                ? { y: '19rem' }
-                : rising
-                  ? { y: ['19rem', '-1.2rem', '0rem'] }
-                  : charging
-                    ? { y: ['0rem', '-9rem'], scale: [1, 1.08] }
-                    : { y: '0rem', scale: 1 }
-            }
-            transition={
-              rising
-                ? { duration: RISE_MS / 1000, times: [0, 0.75, 1], ease: 'easeOut' }
-                : charging
-                  ? { duration: CHARGE_MS / 1000, ease: 'easeInOut' }
-                  : { type: 'spring', stiffness: 90, damping: 14 }
-            }
-            style={box(PACK)}
-            className="absolute"
-          >
-            <motion.img
-              src={src('pack')}
-              alt=""
-              animate={
-                charging || rising
-                  ? { y: 0, filter: 'drop-shadow(0 0 3rem rgb(127 246 255 / 1)) brightness(1.15)' }
-                  : broken
-                    ? { y: ['0rem', '-0.7rem', '0rem'], filter: 'drop-shadow(0 0 1rem rgb(127 246 255 / 0.35)) brightness(1)' }
-                    : { y: 0 }
-              }
-              transition={
-                broken
-                  ? { y: { delay: 1, duration: 3.6, repeat: Infinity, ease: 'easeInOut' }, filter: { duration: 0.6 } }
-                  : { duration: 0.6 }
-              }
-              className="h-full w-full"
-            />
-          </motion.div>
-        </div>
-
-        {phase !== 'idle' && (
+        {risen && (
           <motion.div
             initial={{ opacity: 0, scale: 0.4 }}
             animate={{ opacity: [0, 0.9, 0], scale: [0.4, 1.4, 1.8] }}
@@ -333,17 +306,6 @@ export default function BreakPage() {
             className="pointer-events-none absolute top-[88rem] left-[13.75rem] h-[9rem] w-[40rem] rounded-[50%] border-[0.4rem] border-cyan shadow-[0_0_2rem_rgb(0_240_249/0.8)]"
           />
         )}
-
-        {broken &&
-          [0, 0.12, 0.24].map(delay => (
-            <motion.div
-              key={delay}
-              initial={{ opacity: 0, scale: 0.3 }}
-              animate={{ opacity: [0, 1, 0], scale: 3 }}
-              transition={{ delay, duration: 1, ease: 'easeOut' }}
-              className="pointer-events-none absolute top-[41.6rem] left-[16.7rem] size-[30rem] rounded-full border-[0.5rem] border-cyan shadow-[0_0_3rem_1rem_rgb(0_240_249/0.6),inset_0_0_3rem_1rem_rgb(0_240_249/0.5)]"
-            />
-          ))}
 
         <motion.div animate={phase === 'idle' ? { opacity: 1, y: 0 } : { opacity: 0, y: '3rem' }} transition={{ duration: 0.35 }}>
           <ChallengeButton
@@ -356,14 +318,69 @@ export default function BreakPage() {
             className="absolute top-[98rem] left-[11.5rem] h-[9.4rem] w-[44.5rem]"
           />
         </motion.div>
+
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-40 h-[94.8rem] overflow-hidden">
+          <motion.div
+            initial={{ y: '19rem' }}
+            animate={
+              rising
+                ? { y: ['19rem', '-1.2rem', '0rem'] }
+                : leaving
+                  ? { ...FLIGHT, opacity: [1, 1, 0] }
+                  : { y: '19rem' }
+            }
+            transition={
+              rising
+                ? { duration: RISE_MS / 1000, times: [0, 0.75, 1], ease: 'easeOut' }
+                : leaving
+                  ? { duration: 1.3, ease: [0.65, 0, 0.35, 1], opacity: { duration: 1.45, times: [0, 0.8, 1] } }
+                  : { duration: 0 }
+            }
+            style={box(PACK)}
+            className="absolute"
+          >
+            <motion.img
+              src={src('pack')}
+              alt=""
+              animate={{
+                filter: risen
+                  ? 'drop-shadow(0 0 2.5rem rgb(127 246 255 / 0.9)) brightness(1.1)'
+                  : 'drop-shadow(0 0 0 rgb(127 246 255 / 0)) brightness(1)',
+              }}
+              transition={{ duration: 0.6 }}
+              className="h-full w-full"
+            />
+          </motion.div>
+        </div>
+
+        {leaving && (
+          <motion.img
+            src={`${settings.finale.media}/pack.webp`}
+            alt=""
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.1, duration: 0.4 }}
+            style={box(FINALE_PACK)}
+            className="absolute z-40 mix-blend-multiply"
+          />
+        )}
       </Stage>
 
-      {broken && (
+      {phase === 'break' && (
         <motion.div
           initial={{ opacity: 0.9 }}
-          animate={{ opacity: phase === 'out' ? 1 : 0 }}
-          transition={{ duration: phase === 'out' ? OUT_MS / 1000 : 0.7 }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: 0.7 }}
           className="pointer-events-none absolute inset-0 z-30 bg-[radial-gradient(circle_at_50%_47%,#ffffff_0%,#c9fbff_35%,#7ff6ff_70%)]"
+        />
+      )}
+
+      {leaving && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.9, ease: 'easeInOut' }}
+          className="pointer-events-none absolute inset-0 z-30 bg-white"
         />
       )}
     </Screen>

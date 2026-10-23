@@ -6,7 +6,6 @@ import IntroPage from '../pages/IntroPage'
 import PlayPage from '../pages/PlayPage'
 import FinalePage from '../pages/FinalePage'
 import BreakPage from '../pages/BreakPage'
-import BrokenPage from '../pages/BrokenPage'
 
 const gameId = Object.keys(config.games)[0]
 const start = config.registration.enabled
@@ -25,7 +24,6 @@ export const router = createHashRouter([
       { path: 'intro/:gameId', element: <IntroPage /> },
       { path: 'play/:gameId', element: <PlayPage /> },
       { path: 'break/:gameId', element: <BreakPage /> },
-      { path: 'broken/:gameId', element: <BrokenPage /> },
       { path: 'finale/:gameId', element: <FinalePage /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],

@@ -14,17 +14,13 @@ function reply(int $status, array $body): void
 
 function clean(array $in): array
 {
-    $name = trim(preg_replace('/\s+/u', ' ', (string)($in['name'] ?? '')));
-    $phone = (string)($in['phone'] ?? '');
-    $game = (string)($in['game'] ?? '');
-    $at = (string)($in['registeredAt'] ?? '');
+    $text = fn($key) => mb_substr(trim((string)($in[$key] ?? '')), 0, 200);
+    $name = $text('name');
+    $phone = $text('phone');
+    $game = $text('game');
+    $at = $text('registeredAt');
 
-    $errors = [];
-    if (mb_strlen($name) > 60 || !preg_match("/^[\\p{L} .'-]*$/u", $name)) $errors['name'] = 'Invalid name';
-    if ($phone !== '' && !preg_match('/^\d{10}$/', $phone)) $errors['phone'] = 'Phone must be 10 digits';
-    if (!in_array($game, GAMES, true)) $errors['game'] = 'Unknown game';
-    if ($at !== '' && strtotime($at) === false) $errors['registeredAt'] = 'Invalid date';
-    if ($errors) reply(400, ['ok' => false, 'errors' => $errors]);
+    if (!in_array($game, GAMES, true)) reply(400, ['ok' => false, 'errors' => ['game' => 'Unknown game']]);
 
     return ['name' => $name, 'phone' => $phone, 'game' => $game, 'registeredAt' => $at];
 }
