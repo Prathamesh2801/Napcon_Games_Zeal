@@ -131,6 +131,19 @@ docs/                         ← client Slide 1–6.ai + slide-N.png renders (1
 
 _Update this list as work progresses (newest first)._
 
+- **2026-10-23** — High-res pack from the client (`docs/AB Phylline E pack 3D_Synapse 20-3-26.zip`, PSD 2459×1367): composited
+  with psd-tools without the white `Layer 0` (box + its multiply shading layers) → transparent 1344×1128 cut-out, saved as both
+  `media/break/pack.webp` and `media/finale/pack.webp` (same shot, so the Slide 4 → 6 flight lands exactly). New rects:
+  BreakPage `PACK` [21.45, 74.48, 24, 20.143] (hidden at y 22rem until the rise), finale `PACK` [18.81, 38.43, 27.72, 23.265],
+  `FLIGHT` scale 1.155. The AI-upscaled pack from the previous entry is replaced.
+
+- **2026-10-23** — 4K sharpness on Slide 4: badges split into `badge-N-circle` (ring+dot+icon, shown at `CIRCLE_SCALE` 0.75,
+  origin bottom) and `badge-N-pill` (full size, HTML text), both built from Real-ESRGAN x4 upscales of the .ai parts.
+  `break/pack.webp` = Real-ESRGAN x4 (1000×652) with the tiny print (10 x 10 Tablets, Tablets, side panel, SUN logo) patched
+  back from a plain Lanczos upscale, because the model garbles small text. Finale pack left as is: its upscale distorted the
+  brand text. Tools in the scratchpad: `esr.py` (tiled ONNX Real-ESRGAN, Qualcomm x4plus model), `hires.py`.
+  Best fix for packs: a high-res pack shot from the client.
+
 - **2026-10-23** — Slide 5 removed (BrokenPage, `/broken`, banner.webp, `brokenSeconds`). Slide 4 sequence on BREAK THE CYCLE:
   charge (chain spins up, sick lungs pulse) → break (shards, rings, flash; sick lungs fade, Slide 5 healthy lungs (`media/break/healthy-lungs.webp`,
   colour-segmented out of Slide 5's flat background, script `lungs5.py` in the scratchpad) grow in at `HEALTHY` with a halo) → rise (pack comes up out of the stand) → out (pack flies `FLIGHT` to the finale pack position over a

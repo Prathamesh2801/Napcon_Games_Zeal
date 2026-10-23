@@ -12,18 +12,19 @@ import { play } from '../services/sound'
 const CHAIN = [0.222, 30.09, 62.97, 53.084]
 const LUNGS = [20.14, 42.19, 26.046, 24.398]
 const HEALTHY = [15.383, 32.945, 35.893, 41.466]
-const PACK = [19.463, 76.505, 27.963, 18.265]
-const FINALE_PACK = [18.25, 37.8125, 28.3125, 23.5625]
-const FLIGHT = { x: '-0.78rem', y: '-36.2rem', scale: 1.077 }
+const PACK = [21.45, 74.48, 24, 20.143]
+const FINALE_PACK = [18.81, 38.43, 27.72, 23.265]
+const FLIGHT = { x: '-0.78rem', y: '-34.49rem', scale: 1.155 }
 const STAND = [0, 86.274, 66.9, 11.663]
 const CENTRE = [31.707, 56.632]
 const BADGES = [
-  { box: [25.054, 27.461, 15.362, 15.432], pill: 63.3 },
-  { box: [45.932, 38.643, 16.778, 15.503], pill: 63.47 },
-  { box: [41.756, 61.078, 19.61, 15.503], pill: 63.01 },
-  { box: [5.52, 61.078, 19.61, 15.503], pill: 63.01 },
-  { box: [4.176, 38.643, 16.778, 15.503], pill: 63.47 },
+  { box: [25.054, 27.461, 15.362, 15.432], circle: [26.469, 27.461, 13.946, 12.672], pill: [25.054, 37.23, 15.362, 5.663] },
+  { box: [45.932, 38.643, 16.778, 15.503], circle: [47.347, 38.643, 14.017, 12.672], pill: [45.932, 48.483, 16.778, 5.663] },
+  { box: [41.756, 61.078, 19.61, 15.503], circle: [44.587, 61.078, 13.946, 12.672], pill: [41.756, 70.847, 19.61, 5.734] },
+  { box: [5.52, 61.078, 19.61, 15.503], circle: [8.351, 61.078, 13.946, 12.672], pill: [5.52, 70.847, 19.61, 5.734] },
+  { box: [4.176, 38.643, 16.778, 15.503], circle: [5.52, 38.643, 12.601, 12.672], pill: [4.176, 48.483, 16.778, 5.663] },
 ]
+const CIRCLE_SCALE = 0.75
 const SHARDS = 10
 const CHARGE_MS = 1300
 const BREAK_MS = 1900
@@ -47,6 +48,8 @@ const wedge = i => {
   })
   return `polygon(50% 50%, ${points.join(', ')})`
 }
+
+const inner = ([left, top, width, height], [x, y]) => box([left - x, top - y, width, height])
 
 const away = ([left, top, width, height], distance) => {
   const dx = left + width / 2 - CENTRE[0]
@@ -265,10 +268,16 @@ export default function BreakPage() {
               transition={{ delay: 2 + i * 0.35, duration: 3, repeat: Infinity, ease: 'easeInOut' }}
               className="absolute inset-0"
             >
-              <img src={src(`badge-${i + 1}`)} alt="" className="absolute inset-0 h-full w-full" />
+              <img
+                src={src(`badge-${i + 1}-circle`)}
+                alt=""
+                style={{ ...inner(b.circle, b.box), scale: CIRCLE_SCALE }}
+                className="absolute origin-bottom"
+              />
+              <img src={src(`badge-${i + 1}-pill`)} alt="" style={inner(b.pill, b.box)} className="absolute" />
               <div
-                style={{ top: `${b.pill}%` }}
-                className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-center font-display text-[1.5rem] leading-[1.55rem] whitespace-nowrap text-night"
+                style={inner(b.pill, b.box)}
+                className="absolute flex flex-col items-center justify-center font-display text-[1.5rem] leading-[1.55rem] whitespace-nowrap text-night"
               >
                 {(art.labels?.[i] ?? [tokens[i]?.label]).map(line => (
                   <span key={line}>{line}</span>
@@ -321,13 +330,13 @@ export default function BreakPage() {
 
         <div className="pointer-events-none absolute inset-x-0 top-0 z-40 h-[94.8rem] overflow-hidden">
           <motion.div
-            initial={{ y: '19rem' }}
+            initial={{ y: '22rem' }}
             animate={
               rising
-                ? { y: ['19rem', '-1.2rem', '0rem'] }
+                ? { y: ['22rem', '-1.2rem', '0rem'] }
                 : leaving
                   ? { ...FLIGHT, opacity: [1, 1, 0] }
-                  : { y: '19rem' }
+                  : { y: '22rem' }
             }
             transition={
               rising
@@ -343,7 +352,7 @@ export default function BreakPage() {
               src={src('pack')}
               alt=""
               animate={{
-                filter: risen
+                filter: rising
                   ? 'drop-shadow(0 0 2.5rem rgb(127 246 255 / 0.9)) brightness(1.1)'
                   : 'drop-shadow(0 0 0 rgb(127 246 255 / 0)) brightness(1)',
               }}

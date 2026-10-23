@@ -8,7 +8,7 @@ import config from '../config/config'
 import ChallengeButton from '../features/intro/ChallengeButton'
 
 const HEADER = [9.375, 8.75, 47.8125, 20.625]
-const PACK = [18.25, 37.8125, 28.3125, 23.5625]
+const PACK = [18.81, 38.43, 27.72, 23.265]
 const ARC = [15.75, 56.125, 32.3125, 13.0625]
 const ITEMS = [
   { icon: [6.125, 56.375, 7.375, 6.625], text: [3.0625, 63.75, 12, 5.8125] },
