@@ -6,6 +6,7 @@ import IntroPage from '../pages/IntroPage'
 import PlayPage from '../pages/PlayPage'
 import FinalePage from '../pages/FinalePage'
 import BreakPage from '../pages/BreakPage'
+import IdlePage from '../pages/IdlePage'
 
 const gameId = Object.keys(config.games)[0]
 const start = config.registration.enabled
@@ -19,7 +20,7 @@ export const router = createHashRouter([
     path: '/',
     element: <KioskLayout />,
     children: [
-      { index: true, element: <Navigate to={start} replace /> },
+      { index: true, element: config.idle.enabled ? <IdlePage to={start} /> : <Navigate to={start} replace /> },
       { path: 'register/:gameId', element: <RegisterPage /> },
       { path: 'intro/:gameId', element: <IntroPage /> },
       { path: 'play/:gameId', element: <PlayPage /> },

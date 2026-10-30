@@ -3,6 +3,12 @@ const content = {
     doubleTapFullscreen: true,
   },
 
+  idle: {
+    enabled: true,
+    video: 'media/idle/idle.mp4',
+    button: 'Tap to start',
+  },
+
   sound: {
     enabled: true,
     volume: 1,

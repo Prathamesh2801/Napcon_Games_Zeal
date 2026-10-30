@@ -1,10 +1,10 @@
 # NAPCON Games — touchscreen kiosk
 
 One drag-and-drop matching game (lungs) for a NAPCON (pulmonology conference) booth, running full-screen
-on a **1080-wide portrait touchscreen**. Flow: Register (Slide 1) → Intro (Slide 2, "Start the challenge") → Play (Slide 3; time up = Try again modal)
+on a **1080-wide portrait touchscreen**. Flow: Tap to start (only once per page load, unlocks sound) → Idle (`/`, `media/idle/idle.mp4` loops with sound, tap → Register) → Register (Slide 1) → Intro (Slide 2, "Start the challenge") → Play (Slide 3; time up = Try again modal)
 → completed → Break (Slide 4: chain breaks, lungs turn healthy, pack rises from the stand and flies into place) → Finale (Slide 6 product page,
 Play again / auto after `finale.seconds`). Slide 5 is not used.
-→ Register. `/` redirects to `/register/<first game in config.games>` (or `/intro/…` / `/play/…` if registration / intro is off).
+→ Idle. Every "home" (finale timer, idle timeouts, Home buttons) goes to `/` = IdlePage, whose tap opens `/register/<first game in config.games>` (or `/intro/…` / `/play/…` if registration / intro is off). `idle.enabled: false` in content.js = `/` redirects straight there.
 
 > Keep this file current. When something changes, update the relevant section and the **Status** log at the bottom.
 
@@ -31,7 +31,7 @@ Deploy: unzip `napcon-games.zip` into XAMPP `htdocs/<folder>`.
 
 - **`public/config.js`** (→ `dist/config.js`, edit on the kiosk + refresh) only holds `registerUrl` and `timings`
   (seconds): `registerIdleSeconds`, `introIdleSeconds`, `gameSeconds` (timer), `completeSeconds` (auto-submit after a full
-  board), `timeUpHomeSeconds` (Try again modal → register), `finaleSeconds` (Slide 6),
+  board), `timeUpHomeSeconds` (Try again modal → idle), `finaleSeconds` (Slide 6 → idle video, default 15),
   `arrowSecondsPerTurn` (cycle arrows on all pages). Missing/invalid values fall back to the defaults.
 - **All texts, labels, image/sound paths, colours and stage data are fixed in `src/config/content.js`** (change = rebuild).
   `src/config/config.js` clones it and applies the runtime timings/URL; components read everything via `config`.
@@ -59,9 +59,9 @@ Deploy: unzip `napcon-games.zip` into XAMPP `htdocs/<folder>`.
 ```
 src/
   config/content.js, config.js← fixed content + runtime timings from public/config.js (see Runtime config)
-  main.jsx, routes/index.jsx  ← hash router: / (redirect), /register/:gameId, /intro/:gameId, /play/:gameId, /break/:gameId, /finale/:gameId
+  main.jsx, routes/index.jsx  ← hash router: / (IdlePage), /register/:gameId, /intro/:gameId, /play/:gameId, /break/:gameId, /finale/:gameId
   layouts/KioskLayout.jsx     ← full-screen shell, blocks context menu, background blobs
-  pages/                      ← RegisterPage (landing), IntroPage (Slide 2), PlayPage, BreakPage (Slide 4),
+  pages/                      ← IdlePage (looping video, `/`), RegisterPage (landing), IntroPage (Slide 2), PlayPage, BreakPage (Slide 4),
                                  FinalePage (Slide 6); layer boxes are rem constants measured from the .ai
   components/layout/Screen    ← animated page wrapper (absolute inset-0 flex col)
   components/ui/              ← OnScreenKeyboard (text|numeric layouts)
@@ -130,6 +130,10 @@ docs/                         ← client Slide 1–6.ai + slide-N.png renders (1
 ## Status / open items
 
 _Update this list as work progresses (newest first)._
+
+- **2026-10-30** — Idle screen: `docs/idle.mp4` (1080×1920, 23 s) copied to `public/media/idle/idle.mp4`, looped on `/` by `IdlePage`
+  with sound: a "Tap to start" screen (`idle.button`, register background) shows once per page load so the browser allows
+  unmuted playback (module-level `unlocked` flag; falls back to muted if play() is refused); tap on the video → register. After the finale, `finaleSeconds` (public/config.js) returns here.
 
 - **2026-10-23** — High-res pack from the client (`docs/AB Phylline E pack 3D_Synapse 20-3-26.zip`, PSD 2459×1367): composited
   with psd-tools without the white `Layer 0` (box + its multiply shading layers) → transparent 1344×1128 cut-out, saved as both
